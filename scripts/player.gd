@@ -21,13 +21,19 @@ var stick_target_switched: bool = false
 const STICK_DEADZONE: float = 0.5
 const MOUSE_LOCK_RADIUS: float = 80.0
 
-# Rhythm Hop and Leap State
+# Rhythm Hop, Smooth Walk, and Leap State
 var is_rhythm_hopping: bool = false
 const HOP_STEP_DISTANCE: float = 72.0  # Horizontal distance of each beat-hop
 const HOP_HEIGHT: float = 24.0         # Height of normal ground hop arc
 
-# Input buffering for hop directions
-var buffered_direction: float = 0.0
+# Rhythm walking state machine:
+# "IDLE": no walking input held
+# "HOPPING": performing discrete beat-hops
+# "SMOOTH_WALKING": smoothly walking because player pressed on-beat and held button
+# "LOCKED_OUT": mistimed press; disabled until key is released
+enum MoveMode { IDLE, HOPPING, SMOOTH_WALKING, LOCKED_OUT }
+var current_move_mode: MoveMode = MoveMode.IDLE
+var active_walk_dir: float = 0.0
 
 func _ready() -> void:
 	pass
@@ -151,19 +157,45 @@ func _physics_process(delta: float) -> void:
 				return
 
 	# ----------------------------------------------------
-	# 2. TILE / GRID-BASED RHYTHM STEPPING (Left / Right)
+	# 2. RHYTHM WALKING (A / D, Left / Right Arrow, D-Pad)
 	# ----------------------------------------------------
 	var input_x = Input.get_axis("ui_left", "ui_right")
-	if input_x != 0.0:
-		var dir_sign = sign(input_x)
-		# Face direction of movement
-		if $Sprite2D:
-			$Sprite2D.flip_h = (dir_sign < 0)
-			
+	
+	# Key Released -> Reset to IDLE
+	if input_x == 0.0:
+		current_move_mode = MoveMode.IDLE
+		velocity.x = 0.0
+		move_and_slide()
+		return
+		
+	var dir_sign = sign(input_x)
+	if $Sprite2D:
+		$Sprite2D.flip_h = (dir_sign < 0)
+		
+	# CASE 1: Locked Out (Mistimed press was made and is still being held)
+	# Don't try again until player releases the key!
+	if current_move_mode == MoveMode.LOCKED_OUT:
+		velocity.x = 0.0
+		move_and_slide()
+		return
+		
+	# CASE 2: Smooth Walking (Initiated on-beat and held)
+	if current_move_mode == MoveMode.SMOOTH_WALKING:
+		velocity.x = dir_sign * SPEED
+		move_and_slide()
+		return
+		
+	# CASE 3: Fresh Press from IDLE
+	if current_move_mode == MoveMode.IDLE:
 		var rating = Rhythm.rythymState(soundTrack, current_bpm)
 		if rating != "MISS" and rating != "error":
-			_execute_ground_hop(dir_sign, current_bpm)
+			# Pressed on tempo! Enter SMOOTH_WALKING mode immediately for smooth continuous movement
+			current_move_mode = MoveMode.SMOOTH_WALKING
+			velocity.x = dir_sign * SPEED
+			move_and_slide()
 		else:
+			# Pressed off tempo! Lock out until released so it won't auto-trigger
+			current_move_mode = MoveMode.LOCKED_OUT
 			_play_mistime_feedback()
 		return
 
