@@ -71,7 +71,15 @@ func pulse_heart(seconds_per_beat: float) -> void:
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func lock_on_target(target: Node) -> void:
+	if locked_target == target:
+		return
+	if locked_target != null and locked_target.has_method("set_targeted"):
+		locked_target.set_targeted(false)
+		
 	locked_target = target
+	if locked_target != null and locked_target.has_method("set_targeted"):
+		locked_target.set_targeted(true)
+		
 	if target != null and "entity_name" in target:
 		target_label.text = "[ " + str(target.entity_name) + " ]"
 	elif target != null:
@@ -80,6 +88,8 @@ func lock_on_target(target: Node) -> void:
 		target_label.text = ""
 
 func clear_target() -> void:
+	if locked_target != null and locked_target.has_method("set_targeted"):
+		locked_target.set_targeted(false)
 	locked_target = null
 	target_cues.clear()
 	target_label.text = ""
