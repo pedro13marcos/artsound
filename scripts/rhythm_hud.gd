@@ -66,8 +66,8 @@ func _process(_delta: float) -> void:
 
 func pulse_heart(seconds_per_beat: float) -> void:
 	var tween = create_tween()
-	heart.scale = Vector2(1.35, 1.35)
-	tween.tween_property(heart, "scale", Vector2(1.0, 1.0), seconds_per_beat * 0.4)\
+	heart.scale = Vector2(0.48, 0.48)
+	tween.tween_property(heart, "scale", Vector2(0.40, 0.40), seconds_per_beat * 0.4)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func lock_on_target(target: Node) -> void:

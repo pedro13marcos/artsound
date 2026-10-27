@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://c4e5r2q3skvis" path="res://image/character.png" id="4_mprkn"]
 [ext_resource type="AudioStream" uid="uid://cw5ol7lrxh5bt" path="res://Sounds/Chill beat.mp3" id="4_r644g"]
 [ext_resource type="PackedScene" path="res://scenes/rhythm_hud.tscn" id="5_rhud"]
+[ext_resource type="Texture2D" path="res://image/blademaster.png" id="6_bm_tex"]
 [ext_resource type="Script" path="res://scripts/rhythm_enemy.gd" id="6_enemy"]
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="7_85ip6"]
 
@@ -126,10 +127,8 @@ scale = Vector2(0.984375, 0.765625)
 texture = ExtResource("2_16ubr")
 
 [node name="Sprite2D2" type="Sprite2D" parent="Interaction point" unique_id=784573503]
-modulate = Color(0.9999997, 0.1796163, 0.64906204, 1)
-self_modulate = Color(0.90820074, 0.00070752203, 0.9157155, 1)
-scale = Vector2(0.5390625, 0.5390625)
-texture = ExtResource("2_16ubr")
+position = Vector2(0, -64)
+texture = ExtResource("6_bm_tex")
 
 [node name="CollisionShape2D2" type="CollisionShape2D" parent="Interaction point" unique_id=638283363]
 shape = SubResource("RectangleShape2D_g4v7s")

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c5v8g26l47w8r"]
 
 [ext_resource type="Script" path="res://scripts/rhythm_hud.gd" id="1_rhud1"]
-[ext_resource type="Texture2D" path="res://image/heart_icon.png" id="2_heart"]
+[ext_resource type="Texture2D" path="res://image/player_face.png" id="2_face"]
 
 [node name="RhythmHUD" type="CanvasLayer"]
 script = ExtResource("1_rhud1")
@@ -29,8 +29,8 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="Heart" type="Sprite2D" parent="CenterContainer/Control"]
-scale = Vector2(1, 1)
-texture = ExtResource("2_heart")
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("2_face")
 
 [node name="TargetLabel" type="Label" parent="CenterContainer/Control"]
 layout_mode = 1
