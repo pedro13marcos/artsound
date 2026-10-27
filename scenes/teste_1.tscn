@@ -8,6 +8,7 @@
 [ext_resource type="AudioStream" uid="uid://cw5ol7lrxh5bt" path="res://Sounds/Chill beat.mp3" id="4_r644g"]
 [ext_resource type="PackedScene" path="res://scenes/rhythm_hud.tscn" id="5_rhud"]
 [ext_resource type="Texture2D" path="res://image/blademaster.png" id="6_bm_tex"]
+[ext_resource type="Script" path="res://scripts/rhythm_platform.gd" id="6_plat"]
 [ext_resource type="Script" path="res://scripts/rhythm_enemy.gd" id="6_enemy"]
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="7_85ip6"]
 
@@ -59,6 +60,7 @@ shape = SubResource("RectangleShape2D_yf5fn")
 [node name="Plataform1" type="StaticBody2D" parent="." unique_id=1911498171]
 position = Vector2(2264, 408)
 scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
 
 [node name="Sprite2D" type="Sprite2D" parent="Plataform1" unique_id=2094540808]
 modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
@@ -72,6 +74,7 @@ shape = SubResource("RectangleShape2D_yf5fn")
 [node name="Plataform2" type="StaticBody2D" parent="." unique_id=2057587351]
 position = Vector2(1752, 264)
 scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
 
 [node name="Sprite2D" type="Sprite2D" parent="Plataform2" unique_id=1050297209]
 modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
@@ -85,6 +88,7 @@ shape = SubResource("RectangleShape2D_yf5fn")
 [node name="Plataform3" type="StaticBody2D" parent="." unique_id=2063972418]
 position = Vector2(1344, 80)
 scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
 
 [node name="Sprite2D" type="Sprite2D" parent="Plataform3" unique_id=405437820]
 modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
@@ -98,6 +102,7 @@ shape = SubResource("RectangleShape2D_yf5fn")
 [node name="Plataform4" type="StaticBody2D" parent="." unique_id=1498617531]
 position = Vector2(2008.0002, -128)
 scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
 
 [node name="Sprite2D" type="Sprite2D" parent="Plataform4" unique_id=1063444173]
 modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)

@@ -21,6 +21,14 @@ var stick_target_switched: bool = false
 const STICK_DEADZONE: float = 0.5
 const MOUSE_LOCK_RADIUS: float = 80.0
 
+# Rhythm Hop and Leap State
+var is_rhythm_hopping: bool = false
+const HOP_STEP_DISTANCE: float = 72.0  # Horizontal distance of each beat-hop
+const HOP_HEIGHT: float = 24.0         # Height of normal ground hop arc
+
+# Input buffering for hop directions
+var buffered_direction: float = 0.0
+
 func _ready() -> void:
 	pass
 
@@ -116,29 +124,115 @@ func clear_lock_target() -> void:
 func _physics_process(delta: float) -> void:
 	_handle_controller_lock_switch()
 	
-	# Add the gravity.
+	var current_bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
+	
+	# If currently performing a tweened rhythm hop/leap, skip standard physics
+	if is_rhythm_hopping:
+		return
+
+	# Add the gravity when falling or mid-air
 	if not is_on_floor():
-		velocity += (get_gravity()*1.4) * delta
+		velocity += (get_gravity() * 1.4) * delta
+		move_and_slide()
+		return
 
-	# Handle jump.
-	if Input.is_action_just_pressed("ui_accept") and is_on_floor():
-		velocity.y = JUMP_VELOCITY
+	# ----------------------------------------------------
+	# 1. RHYTHM PLATFORM LEAP (Spacebar / Interact key)
+	# ----------------------------------------------------
+	if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("interact"):
+		# Check if locked onto a rhythm platform
+		if current_target != null and current_target is RhythmPlatform:
+			var rating = Rhythm.rythymState(soundTrack, current_bpm)
+			if rating != "MISS" and rating != "error":
+				_execute_platform_leap(current_target, current_bpm)
+				return
+			else:
+				_play_mistime_feedback()
+				return
 
-	# Get the input direction and handle the movement/deceleration.
-	# As good practice, you should replace UI actions with custom gameplay actions.
-	var direction := Input.get_axis("ui_left", "ui_right")
-	if direction:
-		velocity.x = direction * SPEED
-	else:
-		velocity.x = move_toward(velocity.x, 0, SPEED)
+	# ----------------------------------------------------
+	# 2. TILE / GRID-BASED RHYTHM STEPPING (Left / Right)
+	# ----------------------------------------------------
+	var input_x = Input.get_axis("ui_left", "ui_right")
+	if input_x != 0.0:
+		var dir_sign = sign(input_x)
+		# Face direction of movement
+		if $Sprite2D:
+			$Sprite2D.flip_h = (dir_sign < 0)
+			
+		var rating = Rhythm.rythymState(soundTrack, current_bpm)
+		if rating != "MISS" and rating != "error":
+			_execute_ground_hop(dir_sign, current_bpm)
+		else:
+			_play_mistime_feedback()
+		return
 
+	velocity.x = 0.0
 	move_and_slide()
 
-#Teste of the function of tempo -->
-	if Input.is_action_just_pressed("interact") && isInArea:
-	#		judgeHit();
-			var current_bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
-			OS.alert("interacted " + Rhythm.rythymState(soundTrack, current_bpm));
+# Ground hop to next "tile" / step distance in tempo
+func _execute_ground_hop(dir: float, bpm: float) -> void:
+	is_rhythm_hopping = true
+	var seconds_per_beat = Rhythm.getTimePerBeat(bpm)
+	var hop_duration = seconds_per_beat * 0.45  # Lands before next beat window opens
+	
+	var target_x = global_position.x + (dir * HOP_STEP_DISTANCE)
+	var start_y = global_position.y
+	
+	var tween = create_tween().set_parallel(true)
+	# Horizontal advance
+	tween.tween_property(self, "global_position:x", target_x, hop_duration)\
+		.set_trans(Tween.TRANS_LINEAR)
+	
+	# Vertical bounce arc
+	var y_tween = create_tween()
+	y_tween.tween_property(self, "global_position:y", start_y - HOP_HEIGHT, hop_duration * 0.5)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	y_tween.tween_property(self, "global_position:y", start_y, hop_duration * 0.5)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	y_tween.finished.connect(func():
+		is_rhythm_hopping = false
+	)
+
+# High-flying leap to locked-on platform
+func _execute_platform_leap(plat: RhythmPlatform, bpm: float) -> void:
+	is_rhythm_hopping = true
+	var seconds_per_beat = Rhythm.getTimePerBeat(bpm)
+	var leap_duration = seconds_per_beat * 0.65 # Smooth aerial flight
+	
+	var target_pos = plat.get_landing_position()
+	var start_pos = global_position
+	var apex_y = min(start_pos.y, target_pos.y) - 90.0 # High jump arc above both points
+	
+	var tween = create_tween().set_parallel(true)
+	# Horizontal leap
+	tween.tween_property(self, "global_position:x", target_pos.x, leap_duration)\
+		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	
+	# Vertical arc (rise to apex then descend onto platform)
+	var y_tween = create_tween()
+	y_tween.tween_property(self, "global_position:y", apex_y, leap_duration * 0.45)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	y_tween.tween_property(self, "global_position:y", target_pos.y, leap_duration * 0.55)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	
+	y_tween.finished.connect(func():
+		is_rhythm_hopping = false
+		velocity = Vector2.ZERO
+	)
+
+# Subtle shake/stumble when pressing off-beat
+func _play_mistime_feedback() -> void:
+	is_rhythm_hopping = true
+	var tw = create_tween()
+	var start_x = global_position.x
+	tw.tween_property(self, "global_position:x", start_x + 6.0, 0.04)
+	tw.tween_property(self, "global_position:x", start_x - 6.0, 0.04)
+	tw.tween_property(self, "global_position:x", start_x, 0.04)
+	tw.finished.connect(func():
+		is_rhythm_hopping = false
+	)
 
 #entrando e saindo da area de colisão -->
 func _on_interaction_area_body_entered(body: Node2D) -> void:
