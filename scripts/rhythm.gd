@@ -1,95 +1,84 @@
 extends Node
 
-#constants of closeness
+# Constants of closeness (in seconds)
 const PERFECT = 0.05
-const GREAT = 0.1
+const GREAT = 0.10
 const GOOD = 0.15
 
 const DIVISIONPERBEAT = 4
 
-var currentDivision = 0
+var songOffset: float = 0.0
+var currentBeat: int = 0
+var currentDivision: int = 0
 
 
-func rythymState(backgroundMusic, BPM):
-	var secondsPerDivision = getTimePerBeat(BPM)/4.0;
-	#var currentBeat = getCurrentBeat(backgroundMusic,BPM);
-	#Check if there's music playing
-	if getCurrentDivision(backgroundMusic,BPM) == null:
-		return "error";
-	else:
-		currentDivision = getCurrentDivision(backgroundMusic,BPM);
-		#compare how good is the moment
-		#Test for the current beat
-		match abs(getSongPosition(backgroundMusic)-(getClosestDivision(backgroundMusic,BPM)*secondsPerDivision)):
-		#match abs(getSongPosition(backgroundMusic)-(getClosestBeat(backgroundMusic,BPM)*(secondsPerBeat/(4.0/divisionBeat)))):
-			var h when h <= PERFECT:
-				return "PERFECT";
-			var h when h <= GREAT:
-				return "GREAT";
-			var h when h <= GOOD:
-				return "GOOD"
-			_:
-				return "MISS";
-		
-		
-		
-#func getDivision(backgroundMusic, BPM):
-	##get the time of the division
-	#var timeDivision = getTimePerBeat(BPM)/DIVISIONPERBEAT
-	# #Make sure there's a song playing
-	#if backgroundMusic == null or not backgroundMusic.playing:
-		#return null
-	#else:
-		#var songPosition = getSongPosition(backgroundMusic);
-		#return int(floor(songPosition/timeDivision));
+func rythymState(backgroundMusic, BPM = 120.0, useDivision: bool = false):
+	# Check if there's music playing
+	if backgroundMusic == null or not backgroundMusic.playing:
+		return "error"
 	
+	var songPosition = getSongPosition(backgroundMusic)
+	var secondsPerBeat = getTimePerBeat(BPM)
+	var secondsPerDivision = secondsPerBeat / float(DIVISIONPERBEAT)
+	
+	# Update current beat and division tracker
+	currentBeat = int(floor(songPosition / secondsPerBeat))
+	currentDivision = posmod(int(floor(songPosition / secondsPerDivision)), 16)
+	
+	# Test against beat (default) or subdivision
+	var step = secondsPerDivision if useDivision else secondsPerBeat
+	var closestStep = round(songPosition / step)
+	var diff = abs(songPosition - (closestStep * step))
+	
+	if diff <= PERFECT:
+		return "PERFECT"
+	elif diff <= GREAT:
+		return "GREAT"
+	elif diff <= GOOD:
+		return "GOOD"
+	else:
+		return "MISS"
+
 
 func getCurrentDivision(backgroundMusic, BPM):
-	var secondsPerDivision = getTimePerBeat(BPM)/4.0;
-	#Confirm if there's any music playing
 	if backgroundMusic == null or not backgroundMusic.playing:
-		return null;
-	else:
-		var songPosition = getSongPosition(backgroundMusic);
-		return (int(floor(songPosition/secondsPerDivision)))%16;
-
-#func getCurrentBeat(backgroundMusic, BPM):
-	#var secondsPerBeat = getTimePerBeat(BPM);
-	##Confirm if there's any music playing
-	#if backgroundMusic == null or not backgroundMusic.playing:
-		#return null;
-	#else:
-		#var songPosition = getSongPosition(backgroundMusic);
-		#return int(floor(songPosition/secondsPerBeat));
-
-func getClosestDivision(BackgroundMusic, BPM):
-	#4 subdivision per beat
-	var secondsPerDivision = getTimePerBeat(BPM)/4.0;
-	#Confirm if there's any music playing
-	if BackgroundMusic == null or not BackgroundMusic.playing:
-		return null;
-	else:
-		var songPosition = getSongPosition(BackgroundMusic);
-	# Remova o int(), deixe como float para manter a precisão ao multiplicar de volta
-		return round(songPosition/secondsPerDivision);
-	#else:
-		#var songPosition = getSongPosition(BackgroundMusic);
-		#return int(round(songPosition/secondsPerDivision));
-	#pass;
-
-#func getClosestBeat(backgroundMusic,BPM):
-	##4 subdivision per beat
-	#var secondsPerBeat = getTimePerBeat(BPM);
-	##Confirm if there's any music playing
-	#if backgroundMusic == null or not backgroundMusic.playing:
-		#return null;
-	#else:
-		#var songPosition = getSongPosition(backgroundMusic);
-		#return int(round(songPosition/secondsPerBeat));
+		return null
+	var secondsPerDivision = getTimePerBeat(BPM) / float(DIVISIONPERBEAT)
+	var songPosition = getSongPosition(backgroundMusic)
+	return posmod(int(floor(songPosition / secondsPerDivision)), 16)
 
 
-func getSongPosition(backgroundMusic):
-	return backgroundMusic.get_playback_position() + AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency();
+func getCurrentBeat(backgroundMusic, BPM):
+	if backgroundMusic == null or not backgroundMusic.playing:
+		return null
+	var secondsPerBeat = getTimePerBeat(BPM)
+	var songPosition = getSongPosition(backgroundMusic)
+	return int(floor(songPosition / secondsPerBeat))
+
+
+func getClosestDivision(backgroundMusic, BPM):
+	if backgroundMusic == null or not backgroundMusic.playing:
+		return null
+	var secondsPerDivision = getTimePerBeat(BPM) / float(DIVISIONPERBEAT)
+	var songPosition = getSongPosition(backgroundMusic)
+	return round(songPosition / secondsPerDivision)
+
+
+func getClosestBeat(backgroundMusic, BPM):
+	if backgroundMusic == null or not backgroundMusic.playing:
+		return null
+	var secondsPerBeat = getTimePerBeat(BPM)
+	var songPosition = getSongPosition(backgroundMusic)
+	return round(songPosition / secondsPerBeat)
+
+
+func getSongPosition(backgroundMusic, offset: float = 0.0):
+	if backgroundMusic == null:
+		return 0.0
+	var pos = backgroundMusic.get_playback_position() + AudioServer.get_time_since_last_mix() - AudioServer.get_output_latency()
+	return max(0.0, pos - songOffset - offset)
+
 
 func getTimePerBeat(BPM):
-	return 60.0/BPM;
+	return 60.0 / BPM
+

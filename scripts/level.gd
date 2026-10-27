@@ -1,14 +1,13 @@
 extends Node2D
 
-var bpm: int;
+var bpm: float = 120.0;
 
 func _ready() -> void:
 	$soundTrack.play();
-	bpm = 120.0/16;
 	
 
 func _process(delta: float) -> void:
-	var worldState = Rhythm.rythymState($soundTrack,bpm);
+	var worldState = Rhythm.rythymState($soundTrack, bpm);
 	#linkar o modulate do sprite da interaction area
 	if worldState == "PERFECT":
 		$"Interaction point/Interaction area/Sprite2D".modulate = Color(0.314, 0.737, 0.086, 0.616);

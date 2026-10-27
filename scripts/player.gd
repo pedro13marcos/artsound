@@ -42,7 +42,8 @@ func _physics_process(delta: float) -> void:
 #Teste of the function of tempo -->
 	if Input.is_action_just_pressed("interact") && isInArea:
 	#		judgeHit();
-			OS.alert("interacted"+Rhythm.rythymState(soundTrack,60));
+			var current_bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
+			OS.alert("interacted " + Rhythm.rythymState(soundTrack, current_bpm));
 
 #entrando e saindo da area de colisão -->
 func _on_interaction_area_body_entered(body: Node2D) -> void:
