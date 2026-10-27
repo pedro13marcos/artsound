@@ -2,6 +2,9 @@ extends Node2D
 class_name RhythmEnemy
 
 @export var entity_name: String = "Blade Master"
+## Maximum distance (in pixels) within which the player can interact.
+## Set to 0 to disable the range restriction.
+@export var max_interaction_range: float = 200.0
 
 # Target reticle indicator
 var reticle: Node2D = null

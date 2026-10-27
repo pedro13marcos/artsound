@@ -3,6 +3,9 @@ class_name RhythmPlatform
 
 @export var entity_name: String = "Platform"
 @export var landing_offset_y: float = -65.0 # Landing point above the platform surface
+## Maximum distance (in pixels) within which the player can interact.
+## Set to 0 to disable the range restriction.
+@export var max_interaction_range: float = 400.0
 
 var reticle: Node2D = null
 var base_modulate: Color = Color(0.133, 0.133, 0.133, 1.0)

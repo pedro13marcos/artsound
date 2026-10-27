@@ -3,31 +3,39 @@ class_name RhythmHUD
 
 # Track configurations
 @export var track_width: float = 500.0        # Total track width (left + right = 250px each)
-@export var beats_ahead: float = 2.0         # Number of beats visible in advance
+@export var beats_ahead: float = 2.0          # Number of beats visible in advance
 @export var auto_find_soundtrack: bool = true
 
-# Theme Colors
-const COLOR_METRONOME_BEAT = Color(0.2, 0.8, 1.0, 0.9)      # Neon Blue for global tempo beats
-const COLOR_METRONOME_SUB = Color(0.2, 0.8, 1.0, 0.25)      # Faint blue for subdivisions
-const COLOR_ENEMY_ATTACK = Color(1.0, 0.2, 0.3, 0.95)       # Bright Red for attacks
-const COLOR_ENEMY_SHARPEN = Color(0.2, 1.0, 0.45, 0.95)     # Bright Green/Gold for sharpening/vulnerable
-const COLOR_ENEMY_NEUTRAL = Color(1.0, 0.85, 0.2, 0.9)      # Yellow for neutral cues
+# Textures assigned in the scene
+@export var icon_enemy_texture: Texture2D
+@export var icon_platform_texture: Texture2D
 
-@onready var heart: Sprite2D = $CenterContainer/Control/Heart
-@onready var track_drawer: Control = $CenterContainer/Control/TrackDrawer
-@onready var target_label: Label = $CenterContainer/Control/TargetLabel
+# Theme Colors
+const COLOR_METRONOME_BEAT  = Color(0.2, 0.8, 1.0, 0.9)
+const COLOR_METRONOME_SUB   = Color(0.2, 0.8, 1.0, 0.25)
+const COLOR_ENEMY_ATTACK    = Color(1.0, 0.2, 0.3, 0.95)
+const COLOR_ENEMY_SHARPEN   = Color(0.2, 1.0, 0.45, 0.95)
+const COLOR_ENEMY_NEUTRAL   = Color(1.0, 0.85, 0.2, 0.9)
+const COLOR_OUT_OF_RANGE    = Color(0.8, 0.5, 0.15, 0.85)
+
+@onready var heart: Sprite2D         = $CenterContainer/Control/Heart
+@onready var track_drawer: Control   = $CenterContainer/Control/TrackDrawer
+@onready var target_icon: Sprite2D   = $CenterContainer/Control/TargetIcon
+@onready var target_label: Label     = $CenterContainer/Control/TargetLabel
+@onready var range_label: Label      = $CenterContainer/Control/RangeLabel
 
 var soundtrack: AudioStreamPlayer
 var current_bpm: float = 120.0
 var last_pulsed_beat: int = -1
 
-# Target entity data
-# locked_target can be any Node that has rhythmic cues or attack patterns
 var locked_target: Node = null
-
-# Example pattern cue format:
-# Array of Dictionaries: [{"beat": float, "type": "attack" | "sharpen" | "neutral", "label": "Slash"}]
 var target_cues: Array[Dictionary] = []
+
+# Cached player reference for range check
+var _player: Node2D = null
+
+# True when the player is within the target's interaction range
+var target_in_range: bool = false
 
 func _ready() -> void:
 	if auto_find_soundtrack:
@@ -35,8 +43,20 @@ func _ready() -> void:
 		if get_tree().current_scene.get("bpm") != null:
 			current_bpm = get_tree().current_scene.bpm
 	
+	_player = get_tree().current_scene.find_child("Player", true, false)
+	
+	# Load textures from the scene exports if not set already
+	if icon_enemy_texture == null:
+		icon_enemy_texture = load("res://image/icon_enemy.png")
+	if icon_platform_texture == null:
+		icon_platform_texture = load("res://image/icon_platform.png")
+	
 	# Connect TrackDrawer draw signal to custom draw function
 	track_drawer.draw.connect(_on_track_draw)
+	
+	# Position TargetIcon at the right end of the track
+	target_icon.position = Vector2(track_width / 2.0 + 32.0, 0)
+	target_icon.visible = false
 
 func _process(_delta: float) -> void:
 	if soundtrack == null or not soundtrack.playing:
@@ -61,8 +81,42 @@ func _process(_delta: float) -> void:
 	if locked_target != null and locked_target.has_method("get_upcoming_rhythm_cues"):
 		target_cues = locked_target.get_upcoming_rhythm_cues(song_pos, beats_ahead * seconds_per_beat)
 	
+	# Update range check and icon tint
+	_update_range_state()
+	
 	# Redraw moving rhythm bars
 	track_drawer.queue_redraw()
+
+func _update_range_state() -> void:
+	if locked_target == null or _player == null:
+		target_in_range = false
+		if range_label:
+			range_label.text = ""
+		return
+	
+	# Read max_interaction_range from the target if it exposes one
+	var max_range: float = 0.0
+	if "max_interaction_range" in locked_target:
+		max_range = locked_target.max_interaction_range
+	
+	if max_range <= 0.0:
+		# No range restriction defined
+		target_in_range = true
+		if range_label:
+			range_label.text = ""
+		return
+	
+	var dist = _player.global_position.distance_to(locked_target.global_position)
+	target_in_range = dist <= max_range
+	
+	# Show distance feedback below the target name
+	if range_label:
+		if target_in_range:
+			range_label.text = "In range  [%.0f / %.0f]" % [dist, max_range]
+			range_label.modulate = Color(0.4, 1.0, 0.55, 0.85)
+		else:
+			range_label.text = "Out of range  [%.0f / %.0f]" % [dist, max_range]
+			range_label.modulate = Color(1.0, 0.45, 0.25, 0.85)
 
 func pulse_heart(seconds_per_beat: float) -> void:
 	var tween = create_tween()
@@ -86,6 +140,32 @@ func lock_on_target(target: Node) -> void:
 		target_label.text = "[ " + target.name + " ]"
 	else:
 		target_label.text = ""
+	
+	# Update the target icon with the right graphic and show it
+	_refresh_target_icon(target)
+
+func _refresh_target_icon(target: Node) -> void:
+	if target == null:
+		target_icon.visible = false
+		if range_label:
+			range_label.text = ""
+		return
+	
+	# Pick icon based on type
+	if target is RhythmPlatform:
+		target_icon.texture = icon_platform_texture
+		target_icon.modulate = Color(0.3, 0.85, 1.0, 0.95)
+	else:
+		# Default: enemy / interactable
+		target_icon.texture = icon_enemy_texture
+		target_icon.modulate = Color(1.0, 0.35, 0.5, 0.95)
+	
+	# Animate in
+	target_icon.visible = true
+	target_icon.scale = Vector2(1.1, 1.1)
+	var tw = create_tween()
+	tw.tween_property(target_icon, "scale", Vector2(0.7, 0.7), 0.18)\
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 func clear_target() -> void:
 	if locked_target != null and locked_target.has_method("set_targeted"):
@@ -93,6 +173,10 @@ func clear_target() -> void:
 	locked_target = null
 	target_cues.clear()
 	target_label.text = ""
+	target_icon.visible = false
+	if range_label:
+		range_label.text = ""
+	target_in_range = false
 
 func _on_track_draw() -> void:
 	if soundtrack == null or not soundtrack.playing:
@@ -155,7 +239,18 @@ func _on_track_draw() -> void:
 			track_drawer.draw_line(Vector2(idle_x, -5), Vector2(idle_x, 5), Color(1, 1, 1, 0.15), 1.5)
 		return
 	
-	# Draw cues provided by target
+	# If out of range, draw a faint "out of range" overlay across the right track
+	if not target_in_range:
+		var oor_color = COLOR_OUT_OF_RANGE
+		for i in range(1, int(beats_ahead) + 1):
+			var idle_x = (float(i) / beats_ahead) * half_width
+			track_drawer.draw_line(Vector2(idle_x, -10), Vector2(idle_x, 10), Color(oor_color.r, oor_color.g, oor_color.b, 0.25), 2.0)
+		# Diagonal "locked" X in the right half
+		track_drawer.draw_line(Vector2(20, -14), Vector2(half_width - 20, 14), Color(oor_color.r, oor_color.g, oor_color.b, 0.35), 1.5)
+		track_drawer.draw_line(Vector2(20, 14), Vector2(half_width - 20, -14), Color(oor_color.r, oor_color.g, oor_color.b, 0.35), 1.5)
+		return
+	
+	# Draw cues provided by target (only when in range)
 	for cue in target_cues:
 		var cue_time: float = cue.get("time", 0.0)
 		var cue_type: String = cue.get("type", "attack")
@@ -171,7 +266,7 @@ func _on_track_draw() -> void:
 			
 			if cue_type == "sharpen" or cue_type == "vulnerable":
 				cue_color = COLOR_ENEMY_SHARPEN
-				cue_height = 32.0 # Slightly taller for counter/attack opportunities
+				cue_height = 32.0
 				cue_thickness = 5.0
 			elif cue_type == "neutral":
 				cue_color = COLOR_ENEMY_NEUTRAL
@@ -180,6 +275,5 @@ func _on_track_draw() -> void:
 			# Draw the incoming cue bar on the right side
 			track_drawer.draw_line(Vector2(x_pos, -cue_height / 2.0), Vector2(x_pos, cue_height / 2.0), cue_color, cue_thickness)
 			
-			# Draw an accent symbol or pip on top
-			var dot_color = Color(1.0, 1.0, 1.0, 0.9)
-			track_drawer.draw_circle(Vector2(x_pos, -cue_height / 2.0 - 5.0), 3.0, dot_color)
+			# Draw an accent pip on top
+			track_drawer.draw_circle(Vector2(x_pos, -cue_height / 2.0 - 5.0), 3.0, Color(1.0, 1.0, 1.0, 0.9))

@@ -148,6 +148,16 @@ func _physics_process(delta: float) -> void:
 	if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("interact"):
 		# Check if locked onto a rhythm platform
 		if current_target != null and current_target is RhythmPlatform:
+			# Enforce interaction range
+			var hud = get_parent().get_node_or_null("RhythmHUD")
+			var in_range = true
+			if hud and not hud.target_in_range:
+				in_range = false
+			
+			if not in_range:
+				_play_mistime_feedback()  # Reuse stumble feedback for "too far"
+				return
+			
 			var rating = Rhythm.rythymState(soundTrack, current_bpm)
 			if rating != "MISS" and rating != "error":
 				_execute_platform_leap(current_target, current_bpm)
