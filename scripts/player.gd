@@ -49,9 +49,15 @@ func _physics_process(delta: float) -> void:
 func _on_interaction_area_body_entered(body: Node2D) -> void:
 	if body.name == "Player":
 		isInArea = true;
+		var hud = get_parent().get_node_or_null("RhythmHUD")
+		if hud:
+			hud.lock_on_target(get_node("../Interaction point"))
 
 
 func _on_interaction_area_body_exited(body: Node2D) -> void:
 	if body.name == "Player":
 		isInArea = false;
+		var hud = get_parent().get_node_or_null("RhythmHUD")
+		if hud:
+			hud.clear_target()
 		

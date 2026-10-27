@@ -6,6 +6,8 @@
 [ext_resource type="AudioStream" uid="uid://r47wvehru8hk" path="res://Sounds/tick-deepfrozenapps-397275646-2.mp3" id="3_16ubr"]
 [ext_resource type="Texture2D" uid="uid://c4e5r2q3skvis" path="res://image/character.png" id="4_mprkn"]
 [ext_resource type="AudioStream" uid="uid://cw5ol7lrxh5bt" path="res://Sounds/Chill beat.mp3" id="4_r644g"]
+[ext_resource type="PackedScene" path="res://scenes/rhythm_hud.tscn" id="5_rhud"]
+[ext_resource type="Script" path="res://scripts/rhythm_enemy.gd" id="6_enemy"]
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="7_85ip6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
@@ -107,6 +109,9 @@ shape = SubResource("RectangleShape2D_yf5fn")
 
 [node name="Interaction point" type="StaticBody2D" parent="." unique_id=251095136]
 position = Vector2(1080, 496)
+script = ExtResource("6_enemy")
+
+[node name="RhythmHUD" parent="." instance=ExtResource("5_rhud")]
 
 [node name="Interaction area" type="Area2D" parent="Interaction point" unique_id=1311003030]
 
