@@ -19,7 +19,10 @@ var isInArea = false;
 var current_target: Node = null
 var stick_target_switched: bool = false
 const STICK_DEADZONE: float = 0.5
-const MOUSE_LOCK_RADIUS: float = 80.0
+
+# Mouse flick/direction lock-on settings
+@export var mouse_flick_threshold: float = 25.0 # Minimum mouse motion delta (pixels) to trigger flick
+var mouse_flick_cooldown: float = 0.0
 
 @export var max_los_distance: float = 800.0 # Maximum distance to look/interact via line of sight
 @onready var los_raycast: RayCast2D = null
@@ -40,6 +43,7 @@ var active_walk_dir: float = 0.0
 
 func _ready() -> void:
 	_create_los_raycast()
+	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _create_los_raycast() -> void:
 	los_raycast = RayCast2D.new()
@@ -95,28 +99,15 @@ func has_line_of_sight_to(target: Node) -> bool:
 	return false
 
 func _unhandled_input(event: InputEvent) -> void:
-	# Mouse Click to lock on target (Left click)
-	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_LEFT and event.pressed:
-		var mouse_world_pos = get_global_mouse_position()
-		_try_mouse_lock(mouse_world_pos)
-
-func _try_mouse_lock(mouse_world_pos: Vector2) -> void:
-	var targets = get_tree().get_nodes_in_group("lockable_targets")
-	var closest_target: Node = null
-	var closest_dist: float = MOUSE_LOCK_RADIUS
+	# Directional Mouse Flick: Flicking the mouse selects/switches targets in that direction
+	if event is InputEventMouseMotion:
+		var motion = event.relative
+		if motion.length() >= mouse_flick_threshold and mouse_flick_cooldown <= 0.0:
+			mouse_flick_cooldown = 0.22 # Short debounce to prevent rapid cycling on a single flick
+			_switch_target_in_direction(motion.normalized())
 	
-	for t in targets:
-		if not is_instance_valid(t) or not t is Node2D:
-			continue
-		var dist = mouse_world_pos.distance_to(t.global_position + Vector2(0, -40))
-		if dist < closest_dist:
-			closest_dist = dist
-			closest_target = t
-			
-	if closest_target != null:
-		set_lock_target(closest_target)
-	elif current_target != null:
-		# Clicking empty space unlocks target
+	# Right-click unlocks / clears target
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT and event.pressed:
 		clear_lock_target()
 
 func _handle_controller_lock_switch() -> void:
@@ -184,6 +175,9 @@ func clear_lock_target() -> void:
 
 
 func _physics_process(delta: float) -> void:
+	if mouse_flick_cooldown > 0.0:
+		mouse_flick_cooldown -= delta
+		
 	_handle_controller_lock_switch()
 	
 	# Keep reticle positioned at the corner closest to the player dynamically

@@ -33,9 +33,12 @@ func toggle_pause() -> void:
 	visible = is_paused
 	
 	if is_paused:
+		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		main_container.visible = true
 		options_container.visible = false
 		resume_btn.grab_focus()
+	else:
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
 func _on_resume_button_up() -> void:
 	toggle_pause()
@@ -57,6 +60,7 @@ func _on_fullscreen_toggled(button_pressed: bool) -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
 func _on_menu_button_up() -> void:
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")
 
