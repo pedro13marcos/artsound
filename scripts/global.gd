@@ -14,7 +14,7 @@ func _create_watermark() -> void:
 	
 	var label = Label.new()
 	label.name = "WatermarkLabel"
-	label.text = "pre-alpha version 0.10"
+	label.text = "pre-alpha version 0.11"
 	
 	# Bottom wide alignment
 	label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)

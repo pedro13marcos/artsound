@@ -10,14 +10,14 @@
 [ext_resource type="PackedScene" uid="uid://c5v8g26l47w8r" path="res://scenes/rhythm_hud.tscn" id="5_rhud"]
 [ext_resource type="Texture2D" uid="uid://b4lr5x0v358vh" path="res://image/blademaster.png" id="6_bm_tex"]
 [ext_resource type="Script" uid="uid://dmyd807s2ou3v" path="res://scripts/rhythm_enemy.gd" id="6_enemy"]
-[ext_resource type="Script" uid="uid://badck051h6xt3" path="res://scripts/rhythm_platform.gd" id="6_plat"]
+[ext_resource type="PackedScene" uid="uid://c5platscene01" path="res://scenes/platform.tscn" id="6_plat_scn"]
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="7_85ip6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
 size = Vector2(55, 124)
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_yf5fn"]
-size = Vector2(1210, 129)
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
+size = Vector2(3297.25, 129)
 
 [node name="teste1" type="Node2D" unique_id=579411418]
 script = ExtResource("1_mprkn")
@@ -53,63 +53,23 @@ texture = ExtResource("2_16ubr")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1948344389]
 position = Vector2(560, 615.5)
-shape = SubResource("RectangleShape2D_yf5fn")
+shape = SubResource("RectangleShape2D_ground")
 
-[node name="Plataform1" type="StaticBody2D" parent="." unique_id=1911498171]
+[node name="Plataform1" parent="." unique_id=1911498171 instance=ExtResource("6_plat_scn")]
 position = Vector2(2264, 408)
-scale = Vector2(0.335, 0.46)
-script = ExtResource("6_plat")
+size = Vector2(405, 59)
 
-[node name="Sprite2D" type="Sprite2D" parent="Plataform1" unique_id=2094540808]
-modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
-scale = Vector2(9.453125, 1)
-texture = ExtResource("2_16ubr")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform1" unique_id=1509069217]
-position = Vector2(0, 0.5)
-shape = SubResource("RectangleShape2D_yf5fn")
-
-[node name="Plataform2" type="StaticBody2D" parent="." unique_id=2057587351]
+[node name="Plataform2" parent="." unique_id=2057587351 instance=ExtResource("6_plat_scn")]
 position = Vector2(1752, 264)
-scale = Vector2(0.335, 0.46)
-script = ExtResource("6_plat")
+size = Vector2(405, 59)
 
-[node name="Sprite2D" type="Sprite2D" parent="Plataform2" unique_id=1050297209]
-modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
-scale = Vector2(9.453125, 1)
-texture = ExtResource("2_16ubr")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform2" unique_id=1986394981]
-position = Vector2(0, 0.5)
-shape = SubResource("RectangleShape2D_yf5fn")
-
-[node name="Plataform3" type="StaticBody2D" parent="." unique_id=2063972418]
+[node name="Plataform3" parent="." unique_id=2063972418 instance=ExtResource("6_plat_scn")]
 position = Vector2(1344, 80)
-scale = Vector2(0.335, 0.46)
-script = ExtResource("6_plat")
+size = Vector2(405, 59)
 
-[node name="Sprite2D" type="Sprite2D" parent="Plataform3" unique_id=405437820]
-modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
-scale = Vector2(9.453125, 1)
-texture = ExtResource("2_16ubr")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform3" unique_id=1591710267]
-position = Vector2(0, 0.5)
-shape = SubResource("RectangleShape2D_yf5fn")
-
-[node name="Plataform4" type="StaticBody2D" parent="." unique_id=1498617531]
+[node name="Plataform4" parent="." unique_id=1498617531 instance=ExtResource("6_plat_scn")]
 position = Vector2(2008.0002, -128)
-scale = Vector2(0.335, 0.46)
-script = ExtResource("6_plat")
-
-[node name="Sprite2D" type="Sprite2D" parent="Plataform4" unique_id=1063444173]
-modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
-scale = Vector2(9.453125, 1)
-texture = ExtResource("2_16ubr")
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform4" unique_id=1608428696]
-position = Vector2(0, 0.5)
-shape = SubResource("RectangleShape2D_yf5fn")
+size = Vector2(405, 59)
 
 [node name="Interaction point" type="StaticBody2D" parent="." unique_id=251095136]
 position = Vector2(2687, 485)
