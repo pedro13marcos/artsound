@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://c5enemyscene01"]
+
+[ext_resource type="Script" path="res://scripts/rhythm_enemy.gd" id="1_enemy"]
+[ext_resource type="Texture2D" path="res://image/blademaster.png" id="2_bm"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_enemy"]
+size = Vector2(55, 124)
+
+[node name="BladeMaster" type="StaticBody2D"]
+script = ExtResource("1_enemy")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(0, -64)
+texture = ExtResource("2_bm")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_enemy")

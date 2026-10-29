@@ -1,23 +1,37 @@
 extends Node2D
 
-
-
-
-#@export var bpm: float;
-#
-#@onready var soundTrack = $Player/soundTrack;
-#
-#
-#
-#var secondsPerBeat;
-#var referencePosition;
-#
 func _ready() -> void:
 	#to set up locations
 	TranslationServer.set_locale("pt");
-	#bpm = 120;
-	#secondsPerBeat = 60.0/bpm;
-	pass;
+	_create_watermark()
+
+func _create_watermark() -> void:
+	# Persistent canvas layer on top of all scenes
+	var canvas = CanvasLayer.new()
+	canvas.name = "WatermarkLayer"
+	canvas.layer = 120 # Top-most layer above menus and HUD
+	add_child(canvas)
+	
+	var label = Label.new()
+	label.name = "WatermarkLabel"
+	label.text = "pre-alpha version 0.10"
+	
+	# Bottom wide alignment
+	label.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	
+	# Clean, semi-transparent watermark styling
+	label.add_theme_font_size_override("font_size", 13)
+	label.add_theme_color_override("font_color", Color(1.0, 1.0, 1.0, 0.45))
+	label.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.65))
+	label.add_theme_constant_override("shadow_offset_x", 1)
+	label.add_theme_constant_override("shadow_offset_y", 1)
+	
+	label.offset_bottom = -10.0
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	
+	canvas.add_child(label)
 #
 #func _process(delta: float) -> void:
 	#pass;

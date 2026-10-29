@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://c5playerscene01"]
+
+[ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
+[ext_resource type="Texture2D" path="res://image/character.png" id="2_char"]
+[ext_resource type="AudioStream" path="res://Sounds/tick-deepfrozenapps-397275646-2.mp3" id="3_tick"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(55, 124)
+
+[node name="Player" type="CharacterBody2D"]
+script = ExtResource("1_player")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+position = Vector2(6.5, -6.67)
+scale = Vector2(0.06185, 0.06185)
+texture = ExtResource("2_char")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+position = Vector2(6.5, -6.17)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="tick" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_tick")

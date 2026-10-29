@@ -128,38 +128,48 @@ func _switch_target_in_direction(dir: Vector2) -> void:
 	if targets.is_empty():
 		return
 		
-	# If no target yet, pick closest in stick direction or closest overall
-	if current_target == null:
-		var best_target = null
-		var best_score = -999.0
-		for t in targets:
-			var to_target = (t.global_position - global_position).normalized()
-			var dot = dir.dot(to_target)
-			if dot > best_score:
-				best_score = dot
-				best_target = t
-		if best_target:
-			set_lock_target(best_target)
-		return
-
-	# If already targeting, find next target in the direction pushed
-	var current_pos = current_target.global_position
-	var next_target = null
-	var min_angle_diff = 999.0
+	# Always use player's position as the origin reference point
+	var origin_pos = global_position
+	var best_target: Node = null
+	var best_score = -999.0
 	
 	for t in targets:
-		if t == current_target:
+		if not is_instance_valid(t) or not t is Node2D:
 			continue
-		var to_new = (t.global_position - current_pos).normalized()
-		var dot = dir.dot(to_new)
-		if dot > 0.3: # In the general hemisphere of stick push
-			var angle_diff = acos(clamp(dot, -1.0, 1.0))
-			if angle_diff < min_angle_diff:
-				min_angle_diff = angle_diff
-				next_target = t
+		
+		# Skip target if line of sight is obstructed
+		if not has_line_of_sight_to(t):
+			continue
+			
+		var target_pos: Vector2
+		if t is RhythmPlatform:
+			target_pos = t.get_landing_position(origin_pos)
+		else:
+			target_pos = t.global_position
+			
+		var to_target = target_pos - origin_pos
+		var dist = to_target.length()
+		var to_dir = to_target.normalized()
+		
+		# Alignment dot product with pushed direction (1.0 = direct match, 0 = 90 deg, -1 = opposite)
+		var dot = dir.dot(to_dir)
+		
+		# Must be in the general hemisphere (dot > 0.15)
+		if dot > 0.15:
+			# Prioritize targets with highest directional alignment and proximity
+			# Scoring weights alignment heavily while keeping closer targets favored
+			var score = (dot * 2.5) - (dist / 800.0)
+			
+			# If already locking on this target, give a penalty to encourage switching to another
+			if t == current_target:
+				score -= 0.5
 				
-	if next_target != null:
-		set_lock_target(next_target)
+			if score > best_score:
+				best_score = score
+				best_target = t
+				
+	if best_target != null:
+		set_lock_target(best_target)
 
 func set_lock_target(target: Node) -> void:
 	current_target = target

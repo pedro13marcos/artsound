@@ -7,5 +7,5 @@ func _ready() -> void:
 	$soundTrack.finished.connect(func(): $soundTrack.play())
 	
 
-func _process(delta: float) -> void:
-	var worldState = Rhythm.rythymState($soundTrack, bpm);
+func _process(_delta: float) -> void:
+	var _world_state = Rhythm.rythymState($soundTrack, bpm);
