@@ -1,3 +1,16 @@
-keys,pt_BR,en,es
-menu_play,Jogar,Play,Jugar
-menu_quit,Sair,Exit,Salir
+keys,pt_BR,en,es,fr,ja,zh
+menu_play,Jogar,Play,Jugar,Jouer,プレイ,开始游戏
+menu_test_map,Mapa de Teste,Test Map,Mapa de Prueba,Carte de Test,テストマップ,测试地图
+menu_options,Opções,Options,Opciones,Options,オプション,选项
+menu_quit,Sair,Exit,Salir,Quitter,終了,退出
+menu_exit,Sair,Exit,Salir,Quitter,終了,退出
+menu_language,Idioma,Language,Idioma,Langue,言語,语言
+lang_auto,Automático,Automatic,Automático,Automatique,自動,自动
+pause_title,PAUSADO,PAUSED,PAUSADO,PAUSE,ポーズ,暂停
+pause_resume,Continuar,Resume,Continuar,Reprendre,再開,继续
+pause_options,Opções,Options,Opciones,Options,オプション,选项
+pause_main_menu,Menu Principal,Main Menu,Menú Principal,Menu Principal,メインメニュー,主菜单
+pause_quit,Sair para a Área de Trabalho,Quit to Desktop,Salir al Escritorio,Quitter vers le Bureau,デスクトップへ戻る,退出到桌面
+options_title,OPÇÕES,OPTIONS,OPCIONES,OPTIONS,オプション,选项
+options_fullscreen," Modo Tela Cheia"," Fullscreen Mode"," Modo Pantalla Completa"," Mode Plein Écran"," フルスクリーンモード"," 全屏模式"
+options_back,Voltar,Back,Volver,Retour,戻る,返回

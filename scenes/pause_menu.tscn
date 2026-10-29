@@ -60,7 +60,7 @@ theme_override_constants/separation = 16
 [node name="Title" type="Label" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 64
-text = "PAUSED"
+text = "pause_title"
 horizontal_alignment = 1
 vertical_alignment = 1
 
@@ -72,28 +72,28 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
-text = "Resume"
+text = "pause_resume"
 
 [node name="Options" type="Button" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
-text = "Options"
+text = "pause_options"
 
 [node name="MainMenu" type="Button" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
-text = "Main Menu"
+text = "pause_main_menu"
 
 [node name="Quit" type="Button" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
-text = "Quit to Desktop"
+text = "pause_quit"
 
 [node name="OptionsContainer" type="VBoxContainer" parent="Control"]
 visible = false
@@ -114,7 +114,7 @@ theme_override_constants/separation = 20
 [node name="OptionsTitle" type="Label" parent="Control/OptionsContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 50
-text = "OPTIONS"
+text = "options_title"
 horizontal_alignment = 1
 
 [node name="HSeparator" type="HSeparator" parent="Control/OptionsContainer"]
@@ -123,18 +123,35 @@ layout_mode = 2
 [node name="FullscreenCheck" type="CheckBox" parent="Control/OptionsContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
-text = " Fullscreen Mode"
+text = "options_fullscreen"
+
+[node name="LanguageRow" type="HBoxContainer" parent="Control/OptionsContainer"]
+layout_mode = 2
+theme_override_constants/separation = 12
+
+[node name="LanguageLabel" type="Label" parent="Control/OptionsContainer/LanguageRow"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "menu_language"
+vertical_alignment = 1
+
+[node name="LanguageSelect" type="OptionButton" parent="Control/OptionsContainer/LanguageRow"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 22
+alignment = 1
 
 [node name="Back" type="Button" parent="Control/OptionsContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
-text = "Back"
+text = "options_back"
 
 [connection signal="button_up" from="Control/VBoxContainer/Resume" to="." method="_on_resume_button_up"]
 [connection signal="button_up" from="Control/VBoxContainer/Options" to="." method="_on_options_button_up"]
 [connection signal="button_up" from="Control/VBoxContainer/MainMenu" to="." method="_on_menu_button_up"]
 [connection signal="button_up" from="Control/VBoxContainer/Quit" to="." method="_on_quit_button_up"]
 [connection signal="toggled" from="Control/OptionsContainer/FullscreenCheck" to="." method="_on_fullscreen_toggled"]
+[connection signal="item_selected" from="Control/OptionsContainer/LanguageRow/LanguageSelect" to="." method="_on_language_selected"]
 [connection signal="button_up" from="Control/OptionsContainer/Back" to="." method="_on_options_back_pressed"]

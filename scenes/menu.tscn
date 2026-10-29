@@ -1173,7 +1173,12 @@ text = "menu_play"
 [node name="TestMap" type="Button" parent="VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
-text = "Test Map"
+text = "menu_test_map"
+
+[node name="Options" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "menu_options"
 
 [node name="Exit" type="Button" parent="VBoxContainer" unique_id=1919118664]
 layout_mode = 2
@@ -1181,6 +1186,63 @@ theme = SubResource("Theme_57qmd")
 theme_override_font_sizes/font_size = 30
 text = "menu_quit"
 
+[node name="OptionsContainer" type="VBoxContainer" parent="."]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -150.0
+offset_right = 200.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="OptionsTitle" type="Label" parent="OptionsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 64
+text = "options_title"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="OptionsContainer"]
+layout_mode = 2
+
+[node name="FullscreenCheck" type="CheckBox" parent="OptionsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "options_fullscreen"
+
+[node name="LanguageContainer" type="HBoxContainer" parent="OptionsContainer"]
+layout_mode = 2
+alignment = 1
+theme_override_constants/separation = 12
+
+[node name="LanguageLabel" type="Label" parent="OptionsContainer/LanguageContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+text = "menu_language"
+vertical_alignment = 1
+
+[node name="LanguageSelect" type="OptionButton" parent="OptionsContainer/LanguageContainer"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 24
+alignment = 1
+
+[node name="Back" type="Button" parent="OptionsContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "options_back"
+
 [connection signal="button_up" from="VBoxContainer/Play" to="." method="_on_play_button_up"]
 [connection signal="button_up" from="VBoxContainer/TestMap" to="." method="_on_test_map_button_up"]
+[connection signal="button_up" from="VBoxContainer/Options" to="." method="_on_options_button_up"]
 [connection signal="button_up" from="VBoxContainer/Exit" to="." method="_on_exit_button_up"]
+[connection signal="toggled" from="OptionsContainer/FullscreenCheck" to="." method="_on_fullscreen_toggled"]
+[connection signal="item_selected" from="OptionsContainer/LanguageContainer/LanguageSelect" to="." method="_on_language_selected"]
+[connection signal="button_up" from="OptionsContainer/Back" to="." method="_on_options_back_pressed"]

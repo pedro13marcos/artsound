@@ -75,7 +75,7 @@ interact={
 
 [internationalization]
 
-locale/translations=PackedStringArray("res://translation/translation.en.translation", "res://translation/translation.es.translation", "res://translation/translation.pt_BR.translation")
+locale/translations=PackedStringArray("res://translation/translation.en.translation", "res://translation/translation.es.translation", "res://translation/translation.pt_BR.translation", "res://translation/translation.fr.translation", "res://translation/translation.ja.translation", "res://translation/translation.zh.translation")
 
 [physics]
 
