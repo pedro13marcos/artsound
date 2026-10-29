@@ -10,14 +10,19 @@ class_name RhythmPlatform
 # Light and glow settings
 @export var light_color: Color = Color(1.0, 1.0, 1.0, 1.0)
 @export var light_energy: float = 1.2
-@export var light_radius_scale: float = 1.8
+## Thickness of the glow around the platform (pixels)
+@export var glow_size: float = 26.0
+## How far the lock-on symbol sits above the platform edge (smaller = closer)
+@export var reticle_edge_height: float = 14.0
+## How far the lock-on symbol sits inward from the platform's corner
+@export var reticle_edge_inset: float = 10.0
 
 var reticle: Node2D = null
 var base_modulate: Color = Color(0.133, 0.133, 0.133, 1.0)
 @onready var sprite: Sprite2D = $Sprite2D
 @onready var collision_shape: CollisionShape2D = $CollisionShape2D
 
-var point_light: PointLight2D = null
+var glow: GlowOutline = null
 var last_pulsed_beat: int = -1
 var soundtrack_ref: AudioStreamPlayer = null
 
@@ -51,16 +56,13 @@ func _create_reticle() -> void:
 	reticle.add_child(reticle_drawer)
 
 func _create_light() -> void:
-	point_light = PointLight2D.new()
-	point_light.name = "RhythmLight"
-	var glow_tex = load("res://image/light_glow.png")
-	if glow_tex:
-		point_light.texture = glow_tex
-	point_light.color = light_color
-	point_light.energy = 0.3
-	point_light.texture_scale = light_radius_scale
-	point_light.position = Vector2(0, landing_offset_y)
-	add_child(point_light)
+	# Glow around the whole platform (world-space node so the body's scale doesn't distort it)
+	glow = GlowOutline.new()
+	glow.name = "RhythmGlow"
+	glow.top_level = true
+	add_child(glow)
+	glow.global_position = global_position
+	glow.setup(_get_half_extents(), light_color, glow_size)
 
 func _process(_delta: float) -> void:
 	if soundtrack_ref == null or not soundtrack_ref.playing:
@@ -78,19 +80,19 @@ func _process(_delta: float) -> void:
 		_pulse_light(seconds_per_beat)
 
 func _pulse_light(seconds_per_beat: float) -> void:
-	if point_light == null:
-		return
-	var tw = create_tween()
-	point_light.energy = light_energy
-	point_light.texture_scale = light_radius_scale * 1.3
-	tw.set_parallel(true)
-	tw.tween_property(point_light, "energy", 0.25, seconds_per_beat * 0.7)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(point_light, "texture_scale", light_radius_scale, seconds_per_beat * 0.7)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	if glow != null:
+		glow.pulse(seconds_per_beat * 0.7, light_energy, 0.2)
+	# The lock-on symbol pulses together with the glow
+	if reticle != null and reticle.visible:
+		reticle.scale = Vector2(1.3, 1.3)
+		reticle.modulate.a = 1.0
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(reticle, "scale", Vector2.ONE, seconds_per_beat * 0.6)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(reticle, "modulate:a", 0.65, seconds_per_beat * 0.6)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
-## Calculate the corner of the platform closest to the player
-func get_closest_corner_to(player_pos: Vector2) -> Vector2:
+func _get_half_extents() -> Vector2:
 	var half_w = 100.0
 	var half_h = 30.0
 	if collision_shape and collision_shape.shape is RectangleShape2D:
@@ -100,7 +102,19 @@ func get_closest_corner_to(player_pos: Vector2) -> Vector2:
 	elif sprite and sprite.texture:
 		half_w = (sprite.texture.get_width() * sprite.scale.x * scale.x) / 2.0
 		half_h = (sprite.texture.get_height() * sprite.scale.y * scale.y) / 2.0
-		
+	return Vector2(half_w, half_h)
+
+## Lock-on symbol position: right above the platform edge nearest to the player
+func get_reticle_position(player_pos: Vector2) -> Vector2:
+	var ext = _get_half_extents()
+	var left = Vector2(global_position.x - ext.x + reticle_edge_inset, global_position.y - ext.y - reticle_edge_height)
+	var right = Vector2(global_position.x + ext.x - reticle_edge_inset, left.y)
+	return left if player_pos.distance_to(left) <= player_pos.distance_to(right) else right
+
+## Calculate the corner of the platform closest to the player
+func get_closest_corner_to(player_pos: Vector2) -> Vector2:
+	var half_w = _get_half_extents().x
+	var half_h = _get_half_extents().y
 	var top_surface_y = global_position.y - half_h + landing_offset_y
 	var left_corner = Vector2(global_position.x - half_w, top_surface_y)
 	var right_corner = Vector2(global_position.x + half_w, top_surface_y)
@@ -112,7 +126,7 @@ func get_closest_corner_to(player_pos: Vector2) -> Vector2:
 
 func update_reticle_position(player_pos: Vector2) -> void:
 	if reticle and reticle.visible:
-		reticle.global_position = get_closest_corner_to(player_pos)
+		reticle.global_position = get_reticle_position(player_pos)
 
 func set_targeted(is_targeted: bool) -> void:
 	if reticle:
@@ -120,7 +134,7 @@ func set_targeted(is_targeted: bool) -> void:
 		if is_targeted:
 			var player = get_tree().current_scene.find_child("Player", true, false)
 			if player:
-				reticle.global_position = get_closest_corner_to(player.global_position)
+				reticle.global_position = get_reticle_position(player.global_position)
 			else:
 				reticle.global_position = get_landing_position()
 			var tw = create_tween()

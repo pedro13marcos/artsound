@@ -11,10 +11,12 @@ class_name RhythmEnemy
 @export var sharpen_light_color: Color = Color(0.2, 1.0, 0.4, 1.0) # Green on sharpen/vulnerable
 @export var light_energy: float = 1.4
 @export var light_radius_scale: float = 1.8
+## Thickness of the glow around the enemy (pixels)
+@export var glow_size: float = 30.0
 
 # Target reticle indicator
 var reticle: Node2D = null
-var point_light: PointLight2D = null
+var glow: GlowOutline = null
 var last_pulsed_action_index: int = -1
 var soundtrack_ref: AudioStreamPlayer = null
 
@@ -45,16 +47,19 @@ func _create_reticle() -> void:
 	reticle.add_child(reticle_drawer)
 
 func _create_light() -> void:
-	point_light = PointLight2D.new()
-	point_light.name = "RhythmLight"
-	var glow_tex = load("res://image/light_glow.png")
-	if glow_tex:
-		point_light.texture = glow_tex
-	point_light.color = attack_light_color
-	point_light.energy = 0.2
-	point_light.texture_scale = light_radius_scale
-	point_light.position = Vector2(0, -60)
-	add_child(point_light)
+	# Glow all around the enemy's sprite
+	var half = Vector2(48, 64)
+	var center = Vector2(0, -64)
+	var spr = get_node_or_null("Sprite2D2")
+	if spr is Sprite2D and spr.texture:
+		half = spr.texture.get_size() * spr.scale * 0.5
+		center = spr.position
+	glow = GlowOutline.new()
+	glow.name = "RhythmGlow"
+	glow.position = center
+	add_child(glow)
+	glow.setup(half, attack_light_color, glow_size)
+	glow.intensity = 0.2
 
 func _process(_delta: float) -> void:
 	if soundtrack_ref == null or not soundtrack_ref.playing:
@@ -83,18 +88,19 @@ func _process(_delta: float) -> void:
 		last_pulsed_action_index = -1
 
 func _pulse_light(action_type: String, seconds_per_beat: float) -> void:
-	if point_light == null:
+	if glow == null:
 		return
-	var tw = create_tween()
 	var target_col = sharpen_light_color if (action_type == "sharpen" or action_type == "vulnerable") else attack_light_color
-	point_light.color = target_col
-	point_light.energy = light_energy
-	point_light.texture_scale = light_radius_scale * 1.35
-	tw.set_parallel(true)
-	tw.tween_property(point_light, "energy", 0.2, seconds_per_beat * 0.45)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	tw.tween_property(point_light, "texture_scale", light_radius_scale, seconds_per_beat * 0.45)\
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	glow.glow_color = target_col
+	glow.pulse(seconds_per_beat * 0.45, light_energy, 0.2)
+	# The lock-on symbol pulses with the glow, tinted by the action
+	if reticle != null and reticle.visible:
+		reticle.modulate = Color(target_col.r, target_col.g, target_col.b, 1.0)
+		reticle.scale = Vector2(1.25, 1.25)
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(reticle, "scale", Vector2.ONE, seconds_per_beat * 0.45)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(reticle, "modulate:a", 0.65, seconds_per_beat * 0.45)
 
 func set_targeted(is_targeted: bool) -> void:
 	if reticle:
