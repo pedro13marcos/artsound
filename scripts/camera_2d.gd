@@ -5,11 +5,13 @@ extends Camera2D
 # Maximum pan offset from player position
 @export var max_offset: Vector2 = Vector2(240.0, 140.0)
 @export var pan_smooth_speed: float = 6.0
+## Camera zoom. Below 1.0 shows more of the world (zoomed out).
+@export var camera_zoom: float = 0.8
 
 var current_pan_offset: Vector2 = Vector2.ZERO
 
 func _ready() -> void:
-	pass
+	zoom = Vector2(camera_zoom, camera_zoom)
 
 func _process(delta: float) -> void:
 	if not is_instance_valid(player):

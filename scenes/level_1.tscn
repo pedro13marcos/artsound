@@ -1,0 +1,260 @@
+[gd_scene format=3 uid="uid://cqk1hemomhb83"]
+
+[ext_resource type="Script" uid="uid://bd3a5017sni55" path="res://scripts/level.gd" id="1_level"]
+[ext_resource type="Script" uid="uid://3x83eargri7e" path="res://scripts/player.gd" id="2_player"]
+[ext_resource type="Texture2D" uid="uid://d07tuk72yc7ro" path="res://icon.svg" id="3_icon"]
+[ext_resource type="AudioStream" uid="uid://r47wvehru8hk" path="res://Sounds/tick-deepfrozenapps-397275646-2.mp3" id="4_tick"]
+[ext_resource type="Texture2D" uid="uid://c4e5r2q3skvis" path="res://image/character.png" id="5_char"]
+[ext_resource type="AudioStream" uid="uid://cw5ol7lrxh5bt" path="res://Sounds/Chill beat.mp3" id="6_music"]
+[ext_resource type="PackedScene" uid="uid://c5v8g26l47w8r" path="res://scenes/rhythm_hud.tscn" id="7_hud"]
+[ext_resource type="PackedScene" uid="uid://b7v1a2k3m4n5p" path="res://scenes/pause_menu.tscn" id="8_pause"]
+[ext_resource type="Texture2D" uid="uid://b4lr5x0v358vh" path="res://image/blademaster.png" id="9_bm"]
+[ext_resource type="Script" uid="uid://badck051h6xt3" path="res://scripts/rhythm_platform.gd" id="10_plat"]
+[ext_resource type="Script" uid="uid://dmyd807s2ou3v" path="res://scripts/rhythm_enemy.gd" id="11_enemy"]
+[ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="12_cam"]
+[ext_resource type="Script" uid="uid://xquvibblqfvh" path="res://scripts/wall_block.gd" id="13_wall"]
+
+[sub_resource type="RectangleShape2D" id="Shape_floor"]
+size = Vector2(1230, 36)
+
+[sub_resource type="RectangleShape2D" id="Shape_ledge"]
+size = Vector2(840, 36)
+
+[sub_resource type="RectangleShape2D" id="Shape_step"]
+size = Vector2(372, 36)
+
+[sub_resource type="RectangleShape2D" id="Shape_small"]
+size = Vector2(180, 28)
+
+[sub_resource type="RectangleShape2D" id="Shape_body"]
+size = Vector2(55, 124)
+
+[node name="Level1" type="Node2D" unique_id=565029601]
+script = ExtResource("1_level")
+
+[node name="soundTrack" type="AudioStreamPlayer" parent="." unique_id=1556425750]
+stream = ExtResource("6_music")
+autoplay = true
+
+[node name="Walls" type="Node2D" parent="." unique_id=1387044439]
+
+[node name="CorridorFloor" type="StaticBody2D" parent="Walls" unique_id=1825602871]
+position = Vector2(480, 2715)
+scale = Vector2(1.355, 1)
+script = ExtResource("13_wall")
+size = Vector2(684, 36)
+
+[node name="CorridorLeftWall" type="StaticBody2D" parent="Walls" unique_id=714564190]
+position = Vector2(480, 2124)
+script = ExtResource("13_wall")
+size = Vector2(36, 627)
+
+[node name="CorridorRightWall" type="StaticBody2D" parent="Walls" unique_id=1930145883]
+position = Vector2(1364, 1886)
+script = ExtResource("13_wall")
+size = Vector2(36, 867)
+
+[node name="OuterLeftWall" type="StaticBody2D" parent="Walls" unique_id=1304720351]
+position = Vector2(108, 645)
+script = ExtResource("13_wall")
+size = Vector2(36, 1479)
+
+[node name="ShaftTab" type="StaticBody2D" parent="Walls" unique_id=763091130]
+position = Vector2(75, 620)
+script = ExtResource("13_wall")
+size = Vector2(140, 30)
+
+[node name="ShaftRightWall" type="StaticBody2D" parent="Walls" unique_id=456998229]
+position = Vector2(569, 720)
+script = ExtResource("13_wall")
+size = Vector2(36, 345)
+
+[node name="Ceiling" type="StaticBody2D" parent="Walls" unique_id=324329997]
+position = Vector2(575, 1050)
+script = ExtResource("13_wall")
+size = Vector2(1290, 36)
+
+[node name="RightWall" type="StaticBody2D" parent="Walls" unique_id=6575077]
+position = Vector2(1847, 1050)
+script = ExtResource("13_wall")
+size = Vector2(36, 840)
+
+[node name="Platforms" type="Node2D" parent="." unique_id=1133441566]
+
+[node name="EnemyFloor" type="StaticBody2D" parent="Platforms" unique_id=1880740153]
+position = Vector2(1256, 1892)
+script = ExtResource("10_plat")
+entity_name = "Enemy Floor"
+max_interaction_range = 1300.0
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/EnemyFloor" unique_id=1699532151]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(9.609375, 0.28125)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/EnemyFloor" unique_id=113206064]
+shape = SubResource("Shape_floor")
+
+[node name="UpperLedge" type="StaticBody2D" parent="Platforms" unique_id=836105924]
+position = Vector2(828.00006, 1473)
+scale = Vector2(1.64, 1)
+script = ExtResource("10_plat")
+entity_name = "Upper Ledge"
+max_interaction_range = 1300.0
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/UpperLedge" unique_id=1344084833]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(6.5625, 0.28125)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/UpperLedge" unique_id=1119330956]
+shape = SubResource("Shape_ledge")
+
+[node name="StepFloor" type="StaticBody2D" parent="Platforms" unique_id=787891200]
+position = Vector2(330, 2106)
+script = ExtResource("10_plat")
+entity_name = "Step"
+max_interaction_range = 900.0
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/StepFloor" unique_id=327863545]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(2.90625, 0.28125)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/StepFloor" unique_id=67451129]
+shape = SubResource("Shape_step")
+
+[node name="LedgeC1" type="StaticBody2D" parent="Platforms" unique_id=1619594194]
+position = Vector2(664, 2483)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/LedgeC1" unique_id=483118986]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LedgeC1" unique_id=1726503242]
+shape = SubResource("Shape_small")
+
+[node name="LedgeC2" type="StaticBody2D" parent="Platforms" unique_id=1087220234]
+position = Vector2(1123, 2310)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/LedgeC2" unique_id=12296034]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LedgeC2" unique_id=515584115]
+shape = SubResource("Shape_small")
+
+[node name="LedgeC3" type="StaticBody2D" parent="Platforms" unique_id=1883482710]
+position = Vector2(804, 2164)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/LedgeC3" unique_id=1345578490]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/LedgeC3" unique_id=1858473011]
+shape = SubResource("Shape_small")
+
+[node name="ShaftS2" type="StaticBody2D" parent="Platforms" unique_id=1278312678]
+position = Vector2(230, 1170)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/ShaftS2" unique_id=781658282]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/ShaftS2" unique_id=390743256]
+shape = SubResource("Shape_small")
+
+[node name="ShaftS3" type="StaticBody2D" parent="Platforms" unique_id=1100905584]
+position = Vector2(497, 913)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/ShaftS3" unique_id=161030517]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/ShaftS3" unique_id=1358776670]
+shape = SubResource("Shape_small")
+
+[node name="ShaftS4" type="StaticBody2D" parent="Platforms" unique_id=791233614]
+position = Vector2(230, 647)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/ShaftS4" unique_id=1731379136]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/ShaftS4" unique_id=539340549]
+shape = SubResource("Shape_small")
+
+[node name="RoomR1" type="StaticBody2D" parent="Platforms" unique_id=568562590]
+position = Vector2(1646, 1311)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/RoomR1" unique_id=1236893477]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/RoomR1" unique_id=1203809814]
+shape = SubResource("Shape_small")
+
+[node name="RoomR2" type="StaticBody2D" parent="Platforms" unique_id=279470968]
+position = Vector2(1677, 1696)
+script = ExtResource("10_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Platforms/RoomR2" unique_id=1126710025]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(1.40625, 0.21875)
+texture = ExtResource("3_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Platforms/RoomR2" unique_id=1310490601]
+shape = SubResource("Shape_small")
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=1535194624]
+position = Vector2(800, 2655)
+script = ExtResource("2_player")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player" unique_id=1340325886]
+position = Vector2(6.5000057, -6.666565)
+scale = Vector2(0.061848965, 0.06184902)
+texture = ExtResource("5_char")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=1462868293]
+position = Vector2(6.500004, -6.1665955)
+shape = SubResource("Shape_body")
+
+[node name="tick" type="AudioStreamPlayer2D" parent="Player" unique_id=1669791609]
+stream = ExtResource("4_tick")
+
+[node name="BladeMaster" type="StaticBody2D" parent="." unique_id=1883282028]
+position = Vector2(1256, 1808)
+script = ExtResource("11_enemy")
+
+[node name="Sprite2D2" type="Sprite2D" parent="BladeMaster" unique_id=2110761598]
+position = Vector2(0, -64)
+texture = ExtResource("9_bm")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="BladeMaster" unique_id=1917574335]
+shape = SubResource("Shape_body")
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1462827716 node_paths=PackedStringArray("player")]
+position = Vector2(800, 2655)
+offset = Vector2(0, -150)
+limit_smoothed = true
+position_smoothing_enabled = true
+script = ExtResource("12_cam")
+player = NodePath("../Player")
+
+[node name="RhythmHUD" parent="." unique_id=689987596 instance=ExtResource("7_hud")]
+
+[node name="PauseMenu" parent="." unique_id=1967561044 instance=ExtResource("8_pause")]

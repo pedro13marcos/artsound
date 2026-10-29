@@ -1,0 +1,135 @@
+[gd_scene format=3 uid="uid://238j5uat3eou"]
+
+[ext_resource type="Script" uid="uid://bd3a5017sni55" path="res://scripts/level.gd" id="1_mprkn"]
+[ext_resource type="Script" uid="uid://3x83eargri7e" path="res://scripts/player.gd" id="1_wcthm"]
+[ext_resource type="Texture2D" uid="uid://d07tuk72yc7ro" path="res://icon.svg" id="2_16ubr"]
+[ext_resource type="AudioStream" uid="uid://r47wvehru8hk" path="res://Sounds/tick-deepfrozenapps-397275646-2.mp3" id="3_16ubr"]
+[ext_resource type="Texture2D" uid="uid://c4e5r2q3skvis" path="res://image/character.png" id="4_mprkn"]
+[ext_resource type="AudioStream" uid="uid://cw5ol7lrxh5bt" path="res://Sounds/Chill beat.mp3" id="4_r644g"]
+[ext_resource type="PackedScene" uid="uid://b7v1a2k3m4n5p" path="res://scenes/pause_menu.tscn" id="5_pause"]
+[ext_resource type="PackedScene" uid="uid://c5v8g26l47w8r" path="res://scenes/rhythm_hud.tscn" id="5_rhud"]
+[ext_resource type="Texture2D" uid="uid://b4lr5x0v358vh" path="res://image/blademaster.png" id="6_bm_tex"]
+[ext_resource type="Script" uid="uid://dmyd807s2ou3v" path="res://scripts/rhythm_enemy.gd" id="6_enemy"]
+[ext_resource type="Script" uid="uid://badck051h6xt3" path="res://scripts/rhythm_platform.gd" id="6_plat"]
+[ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="7_85ip6"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
+size = Vector2(55, 124)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_yf5fn"]
+size = Vector2(1210, 129)
+
+[node name="TestMap" type="Node2D" unique_id=579411418]
+script = ExtResource("1_mprkn")
+
+[node name="soundTrack" type="AudioStreamPlayer" parent="." unique_id=676168920]
+stream = ExtResource("4_r644g")
+autoplay = true
+
+[node name="Player" type="CharacterBody2D" parent="." unique_id=430944952]
+position = Vector2(192, 456)
+script = ExtResource("1_wcthm")
+
+[node name="Sprite2D" type="Sprite2D" parent="Player" unique_id=1601565616]
+position = Vector2(6.5000057, -6.666565)
+scale = Vector2(0.061848965, 0.06184902)
+texture = ExtResource("4_mprkn")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Player" unique_id=567699999]
+position = Vector2(6.500004, -6.1665955)
+shape = SubResource("RectangleShape2D_g4v7s")
+
+[node name="tick" type="AudioStreamPlayer2D" parent="Player" unique_id=365392974]
+stream = ExtResource("3_16ubr")
+
+[node name="Ground" type="StaticBody2D" parent="." unique_id=1607711863]
+scale = Vector2(2.725, 1)
+
+[node name="Sprite2D" type="Sprite2D" parent="Ground" unique_id=1547288819]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+position = Vector2(560, 615)
+scale = Vector2(9.453125, 1)
+texture = ExtResource("2_16ubr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Ground" unique_id=1948344389]
+position = Vector2(560, 615.5)
+shape = SubResource("RectangleShape2D_yf5fn")
+
+[node name="Plataform1" type="StaticBody2D" parent="." unique_id=1911498171]
+position = Vector2(2264, 408)
+scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Plataform1" unique_id=2094540808]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(9.453125, 1)
+texture = ExtResource("2_16ubr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform1" unique_id=1509069217]
+position = Vector2(0, 0.5)
+shape = SubResource("RectangleShape2D_yf5fn")
+
+[node name="Plataform2" type="StaticBody2D" parent="." unique_id=2057587351]
+position = Vector2(1752, 264)
+scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Plataform2" unique_id=1050297209]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(9.453125, 1)
+texture = ExtResource("2_16ubr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform2" unique_id=1986394981]
+position = Vector2(0, 0.5)
+shape = SubResource("RectangleShape2D_yf5fn")
+
+[node name="Plataform3" type="StaticBody2D" parent="." unique_id=2063972418]
+position = Vector2(1344, 80)
+scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Plataform3" unique_id=405437820]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(9.453125, 1)
+texture = ExtResource("2_16ubr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform3" unique_id=1591710267]
+position = Vector2(0, 0.5)
+shape = SubResource("RectangleShape2D_yf5fn")
+
+[node name="Plataform4" type="StaticBody2D" parent="." unique_id=1498617531]
+position = Vector2(2008.0002, -128)
+scale = Vector2(0.335, 0.46)
+script = ExtResource("6_plat")
+
+[node name="Sprite2D" type="Sprite2D" parent="Plataform4" unique_id=1063444173]
+modulate = Color(0.13319641, 0.13319641, 0.13319638, 1)
+scale = Vector2(9.453125, 1)
+texture = ExtResource("2_16ubr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Plataform4" unique_id=1608428696]
+position = Vector2(0, 0.5)
+shape = SubResource("RectangleShape2D_yf5fn")
+
+[node name="Interaction point" type="StaticBody2D" parent="." unique_id=251095136]
+position = Vector2(2687, 485)
+script = ExtResource("6_enemy")
+
+[node name="Sprite2D2" type="Sprite2D" parent="Interaction point" unique_id=784573503]
+position = Vector2(0, -64)
+texture = ExtResource("6_bm_tex")
+
+[node name="CollisionShape2D2" type="CollisionShape2D" parent="Interaction point" unique_id=638283363]
+shape = SubResource("RectangleShape2D_g4v7s")
+
+[node name="RhythmHUD" parent="." unique_id=987802570 instance=ExtResource("5_rhud")]
+
+[node name="PauseMenu" parent="." unique_id=1028177718 instance=ExtResource("5_pause")]
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1542673224 node_paths=PackedStringArray("player")]
+position = Vector2(0, 4)
+offset = Vector2(0, -150)
+limit_smoothed = true
+position_smoothing_enabled = true
+script = ExtResource("7_85ip6")
+player = NodePath("../Player")

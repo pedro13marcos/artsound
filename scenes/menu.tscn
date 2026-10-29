@@ -1170,6 +1170,11 @@ layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "menu_play"
 
+[node name="TestMap" type="Button" parent="VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 30
+text = "Test Map"
+
 [node name="Exit" type="Button" parent="VBoxContainer" unique_id=1919118664]
 layout_mode = 2
 theme = SubResource("Theme_57qmd")
@@ -1177,4 +1182,5 @@ theme_override_font_sizes/font_size = 30
 text = "menu_quit"
 
 [connection signal="button_up" from="VBoxContainer/Play" to="." method="_on_play_button_up"]
+[connection signal="button_up" from="VBoxContainer/TestMap" to="." method="_on_test_map_button_up"]
 [connection signal="button_up" from="VBoxContainer/Exit" to="." method="_on_exit_button_up"]
