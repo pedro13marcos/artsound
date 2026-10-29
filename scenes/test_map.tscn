@@ -8,9 +8,8 @@
 [ext_resource type="AudioStream" uid="uid://cw5ol7lrxh5bt" path="res://Sounds/Chill beat.mp3" id="4_r644g"]
 [ext_resource type="PackedScene" uid="uid://b7v1a2k3m4n5p" path="res://scenes/pause_menu.tscn" id="5_pause"]
 [ext_resource type="PackedScene" uid="uid://c5v8g26l47w8r" path="res://scenes/rhythm_hud.tscn" id="5_rhud"]
-[ext_resource type="Texture2D" uid="uid://b4lr5x0v358vh" path="res://image/blademaster.png" id="6_bm_tex"]
-[ext_resource type="Script" uid="uid://dmyd807s2ou3v" path="res://scripts/rhythm_enemy.gd" id="6_enemy"]
 [ext_resource type="PackedScene" uid="uid://c5platscene01" path="res://scenes/platform.tscn" id="6_plat_scn"]
+[ext_resource type="PackedScene" uid="uid://brgmvks1ali2w" path="res://scenes/enemy_blademaster.tscn" id="7_enemy_scn"]
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="7_85ip6"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
@@ -71,16 +70,8 @@ size = Vector2(405, 59)
 position = Vector2(2008.0002, -128)
 size = Vector2(405, 59)
 
-[node name="Interaction point" type="StaticBody2D" parent="." unique_id=251095136]
+[node name="Interaction point" parent="." unique_id=251095136 instance=ExtResource("7_enemy_scn")]
 position = Vector2(2687, 485)
-script = ExtResource("6_enemy")
-
-[node name="Sprite2D2" type="Sprite2D" parent="Interaction point" unique_id=784573503]
-position = Vector2(0, -64)
-texture = ExtResource("6_bm_tex")
-
-[node name="CollisionShape2D2" type="CollisionShape2D" parent="Interaction point" unique_id=638283363]
-shape = SubResource("RectangleShape2D_g4v7s")
 
 [node name="RhythmHUD" parent="." unique_id=987802570 instance=ExtResource("5_rhud")]
 

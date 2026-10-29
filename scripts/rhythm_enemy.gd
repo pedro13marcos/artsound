@@ -9,21 +9,39 @@ class_name RhythmEnemy
 # Light settings
 @export var attack_light_color: Color = Color(1.0, 0.2, 0.25, 1.0) # Red on attack
 @export var sharpen_light_color: Color = Color(0.2, 1.0, 0.4, 1.0) # Green on sharpen/vulnerable
-@export var light_energy: float = 1.4
-@export var light_radius_scale: float = 1.8
-## Thickness of the glow around the enemy (pixels)
-@export var glow_size: float = 30.0
+@export var light_energy: float = 2.0
+@export var glow_thickness: float = 2.5
 
 # Target reticle indicator
 var reticle: Node2D = null
-var glow: GlowOutline = null
-var last_pulsed_action_index: int = -1
 var soundtrack_ref: AudioStreamPlayer = null
+var sprite_node: Sprite2D = null
+var outline_material: ShaderMaterial = null
+
+# Pulse tracking by measure beat
+var last_pulse_time: float = -999.0
 
 func _ready() -> void:
 	add_to_group("lockable_targets")
+	_find_sprite()
 	_create_reticle()
-	_create_light()
+	_create_outline_shader()
+
+func _find_sprite() -> void:
+	sprite_node = get_node_or_null("Sprite2D")
+	if sprite_node == null:
+		sprite_node = get_node_or_null("Sprite2D2")
+
+func _create_outline_shader() -> void:
+	if sprite_node == null:
+		return
+	var shader = load("res://shaders/sprite_glow_outline.gdshader")
+	outline_material = ShaderMaterial.new()
+	outline_material.shader = shader
+	outline_material.set_shader_parameter("glow_color", attack_light_color)
+	outline_material.set_shader_parameter("glow_thickness", glow_thickness)
+	outline_material.set_shader_parameter("intensity", 0.3)
+	sprite_node.material = outline_material
 
 func _create_reticle() -> void:
 	reticle = Node2D.new()
@@ -46,21 +64,6 @@ func _create_reticle() -> void:
 	)
 	reticle.add_child(reticle_drawer)
 
-func _create_light() -> void:
-	# Glow all around the enemy's sprite
-	var half = Vector2(48, 64)
-	var center = Vector2(0, -64)
-	var spr = get_node_or_null("Sprite2D2")
-	if spr is Sprite2D and spr.texture:
-		half = spr.texture.get_size() * spr.scale * 0.5
-		center = spr.position
-	glow = GlowOutline.new()
-	glow.name = "RhythmGlow"
-	glow.position = center
-	add_child(glow)
-	glow.setup(half, attack_light_color, glow_size)
-	glow.intensity = 0.2
-
 func _process(_delta: float) -> void:
 	if soundtrack_ref == null or not soundtrack_ref.playing:
 		soundtrack_ref = get_tree().current_scene.find_child("soundTrack", true, false)
@@ -72,35 +75,44 @@ func _process(_delta: float) -> void:
 	var measure_duration = PATTERN_DURATION_BEATS * seconds_per_beat
 	var song_pos = Rhythm.getSongPosition(soundtrack_ref)
 	
-	# Check where in the current measure we are
-	var measure_time = fmod(song_pos, measure_duration)
-	var measure_beat = measure_time / seconds_per_beat
+	# Current measure index & time elapsed within this measure
+	var current_measure = int(floor(song_pos / measure_duration))
+	var measure_start = current_measure * measure_duration
 	
-	# Find closest action in pattern that is landing right now (within 0.08 beats)
-	for i in range(action_sequence.size()):
-		var act = action_sequence[i]
-		var beat_diff = abs(measure_beat - act["beat_offset"])
-		if beat_diff < 0.08 and last_pulsed_action_index != i:
-			last_pulsed_action_index = i
-			_pulse_light(act["type"], seconds_per_beat)
-			break
-	if measure_beat < 0.1 and last_pulsed_action_index == action_sequence.size() - 1:
-		last_pulsed_action_index = -1
+	# Check each action in the sequence across the current measure (and early lead-in to next measure)
+	for act in action_sequence:
+		var cue_abs_time = measure_start + (act["beat_offset"] * seconds_per_beat)
+		# Trigger pulse as soon as song position reaches/crosses cue_abs_time (with a generous 0.09s tolerance)
+		var diff = song_pos - cue_abs_time
+		if diff >= -0.02 and diff < 0.08:
+			if abs(last_pulse_time - cue_abs_time) > 0.15:
+				last_pulse_time = cue_abs_time
+				_pulse_light(act["type"], seconds_per_beat)
+				break
 
 func _pulse_light(action_type: String, seconds_per_beat: float) -> void:
-	if glow == null:
-		return
-	var target_col = sharpen_light_color if (action_type == "sharpen" or action_type == "vulnerable") else attack_light_color
-	glow.glow_color = target_col
-	glow.pulse(seconds_per_beat * 0.45, light_energy, 0.2)
+	var is_green = (action_type == "sharpen" or action_type == "vulnerable")
+	var target_col = sharpen_light_color if is_green else attack_light_color
+	
+	# Animate the pixel outline shader around visible parts of the sprite
+	if outline_material != null:
+		outline_material.set_shader_parameter("glow_color", target_col)
+		var decay_time = seconds_per_beat * 0.45
+		var tw = create_tween()
+		outline_material.set_shader_parameter("intensity", light_energy)
+		tw.tween_method(func(val: float):
+			if outline_material:
+				outline_material.set_shader_parameter("intensity", val)
+		, light_energy, 0.25, decay_time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
 	# The lock-on symbol pulses with the glow, tinted by the action
 	if reticle != null and reticle.visible:
 		reticle.modulate = Color(target_col.r, target_col.g, target_col.b, 1.0)
 		reticle.scale = Vector2(1.25, 1.25)
-		var tw = create_tween().set_parallel(true)
-		tw.tween_property(reticle, "scale", Vector2.ONE, seconds_per_beat * 0.45)\
+		var tw_ret = create_tween().set_parallel(true)
+		tw_ret.tween_property(reticle, "scale", Vector2.ONE, seconds_per_beat * 0.45)\
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-		tw.tween_property(reticle, "modulate:a", 0.65, seconds_per_beat * 0.45)
+		tw_ret.tween_property(reticle, "modulate:a", 0.65, seconds_per_beat * 0.45)
 
 func set_targeted(is_targeted: bool) -> void:
 	if reticle:
