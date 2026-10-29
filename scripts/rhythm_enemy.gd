@@ -4,14 +4,24 @@ class_name RhythmEnemy
 @export var entity_name: String = "Blade Master"
 ## Maximum distance (in pixels) within which the player can interact.
 ## Set to 0 to disable the range restriction.
-@export var max_interaction_range: float = 200.0
+@export var max_interaction_range: float = 350.0
+
+# Light settings
+@export var attack_light_color: Color = Color(1.0, 0.2, 0.25, 1.0) # Red on attack
+@export var sharpen_light_color: Color = Color(0.2, 1.0, 0.4, 1.0) # Green on sharpen/vulnerable
+@export var light_energy: float = 1.4
+@export var light_radius_scale: float = 1.8
 
 # Target reticle indicator
 var reticle: Node2D = null
+var point_light: PointLight2D = null
+var last_pulsed_action_index: int = -1
+var soundtrack_ref: AudioStreamPlayer = null
 
 func _ready() -> void:
 	add_to_group("lockable_targets")
 	_create_reticle()
+	_create_light()
 
 func _create_reticle() -> void:
 	reticle = Node2D.new()
@@ -33,6 +43,58 @@ func _create_reticle() -> void:
 		reticle_drawer.draw_circle(Vector2(0, -60), 3.0, Color.WHITE)
 	)
 	reticle.add_child(reticle_drawer)
+
+func _create_light() -> void:
+	point_light = PointLight2D.new()
+	point_light.name = "RhythmLight"
+	var glow_tex = load("res://image/light_glow.png")
+	if glow_tex:
+		point_light.texture = glow_tex
+	point_light.color = attack_light_color
+	point_light.energy = 0.2
+	point_light.texture_scale = light_radius_scale
+	point_light.position = Vector2(0, -60)
+	add_child(point_light)
+
+func _process(_delta: float) -> void:
+	if soundtrack_ref == null or not soundtrack_ref.playing:
+		soundtrack_ref = get_tree().current_scene.find_child("soundTrack", true, false)
+		if soundtrack_ref == null or not soundtrack_ref.playing:
+			return
+			
+	var bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
+	var seconds_per_beat = Rhythm.getTimePerBeat(bpm)
+	var measure_duration = PATTERN_DURATION_BEATS * seconds_per_beat
+	var song_pos = Rhythm.getSongPosition(soundtrack_ref)
+	
+	# Check where in the current measure we are
+	var measure_time = fmod(song_pos, measure_duration)
+	var measure_beat = measure_time / seconds_per_beat
+	
+	# Find closest action in pattern that is landing right now (within 0.08 beats)
+	for i in range(action_sequence.size()):
+		var act = action_sequence[i]
+		var beat_diff = abs(measure_beat - act["beat_offset"])
+		if beat_diff < 0.08 and last_pulsed_action_index != i:
+			last_pulsed_action_index = i
+			_pulse_light(act["type"], seconds_per_beat)
+			break
+	if measure_beat < 0.1 and last_pulsed_action_index == action_sequence.size() - 1:
+		last_pulsed_action_index = -1
+
+func _pulse_light(action_type: String, seconds_per_beat: float) -> void:
+	if point_light == null:
+		return
+	var tw = create_tween()
+	var target_col = sharpen_light_color if (action_type == "sharpen" or action_type == "vulnerable") else attack_light_color
+	point_light.color = target_col
+	point_light.energy = light_energy
+	point_light.texture_scale = light_radius_scale * 1.35
+	tw.set_parallel(true)
+	tw.tween_property(point_light, "energy", 0.2, seconds_per_beat * 0.45)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(point_light, "texture_scale", light_radius_scale, seconds_per_beat * 0.45)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 
 func set_targeted(is_targeted: bool) -> void:
 	if reticle:

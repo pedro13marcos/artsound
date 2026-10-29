@@ -94,29 +94,31 @@ func _update_range_state() -> void:
 			range_label.text = ""
 		return
 	
-	# Read max_interaction_range from the target if it exposes one
+	# Determine if player has clear line-of-sight using raycast
+	var has_los = true
+	if _player.has_method("has_line_of_sight_to"):
+		has_los = _player.has_line_of_sight_to(locked_target)
+	
 	var max_range: float = 0.0
 	if "max_interaction_range" in locked_target:
 		max_range = locked_target.max_interaction_range
 	
-	if max_range <= 0.0:
-		# No range restriction defined
-		target_in_range = true
-		if range_label:
-			range_label.text = ""
-		return
-	
 	var dist = _player.global_position.distance_to(locked_target.global_position)
-	target_in_range = dist <= max_range
+	var in_distance = (max_range <= 0.0) or (dist <= max_range)
 	
-	# Show distance feedback below the target name
+	target_in_range = has_los and in_distance
+	
+	# Show line-of-sight & distance feedback below the target name
 	if range_label:
-		if target_in_range:
-			range_label.text = "In range  [%.0f / %.0f]" % [dist, max_range]
+		if not has_los:
+			range_label.text = "No line of sight (Blocked)"
+			range_label.modulate = Color(1.0, 0.3, 0.3, 0.9)
+		elif in_distance:
+			range_label.text = "Target in sight  [%.0f / %.0f]" % [dist, max_range] if max_range > 0 else "Target in sight"
 			range_label.modulate = Color(0.4, 1.0, 0.55, 0.85)
 		else:
-			range_label.text = "Out of range  [%.0f / %.0f]" % [dist, max_range]
-			range_label.modulate = Color(1.0, 0.45, 0.25, 0.85)
+			range_label.text = "Out of view range  [%.0f / %.0f]" % [dist, max_range]
+			range_label.modulate = Color(1.0, 0.5, 0.25, 0.85)
 
 func pulse_heart(seconds_per_beat: float) -> void:
 	var tween = create_tween()

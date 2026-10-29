@@ -21,6 +21,9 @@ var stick_target_switched: bool = false
 const STICK_DEADZONE: float = 0.5
 const MOUSE_LOCK_RADIUS: float = 80.0
 
+@export var max_los_distance: float = 800.0 # Maximum distance to look/interact via line of sight
+@onready var los_raycast: RayCast2D = null
+
 # Rhythm Hop, Smooth Walk, and Leap State
 var is_rhythm_hopping: bool = false
 const HOP_STEP_DISTANCE: float = 72.0  # Horizontal distance of each beat-hop
@@ -36,7 +39,60 @@ var current_move_mode: MoveMode = MoveMode.IDLE
 var active_walk_dir: float = 0.0
 
 func _ready() -> void:
-	pass
+	_create_los_raycast()
+
+func _create_los_raycast() -> void:
+	los_raycast = RayCast2D.new()
+	los_raycast.name = "LOSRaycast"
+	los_raycast.enabled = true
+	los_raycast.exclude_parent = true
+	los_raycast.collide_with_areas = false
+	los_raycast.collide_with_bodies = true
+	add_child(los_raycast)
+
+## Checks whether the player has clear line-of-sight to the given target
+func has_line_of_sight_to(target: Node) -> bool:
+	if not is_instance_valid(target) or not target is Node2D:
+		return false
+		
+	var target_center: Vector2
+	if target is RhythmPlatform:
+		target_center = target.get_landing_position(global_position)
+	else:
+		target_center = target.global_position + Vector2(0, -50.0)
+		
+	var origin = global_position + Vector2(0, -30.0) # Eye level
+	var to_target = target_center - origin
+	var dist = to_target.length()
+	
+	# Check distance limit if configured on target
+	var max_range = max_los_distance
+	if "max_interaction_range" in target and target.max_interaction_range > 0.0:
+		max_range = target.max_interaction_range
+		
+	if dist > max_range:
+		return false
+		
+	if los_raycast == null:
+		return true
+		
+	los_raycast.global_position = origin
+	los_raycast.target_position = to_target
+	los_raycast.force_raycast_update()
+	
+	if not los_raycast.is_colliding():
+		return true
+		
+	var collider = los_raycast.get_collider()
+	# Clear view if raycast hit nothing or hit the target itself directly
+	if collider == target or collider == self:
+		return true
+		
+	# If collider is child of target or target is ancestor
+	if collider is Node and (target.is_ancestor_of(collider) or collider.is_ancestor_of(target)):
+		return true
+		
+	return false
 
 func _unhandled_input(event: InputEvent) -> void:
 	# Mouse Click to lock on target (Left click)
@@ -129,6 +185,10 @@ func clear_lock_target() -> void:
 
 func _physics_process(delta: float) -> void:
 	_handle_controller_lock_switch()
+	
+	# Keep reticle positioned at the corner closest to the player dynamically
+	if current_target != null and current_target is RhythmPlatform and current_target.has_method("update_reticle_position"):
+		current_target.update_reticle_position(global_position)
 	
 	var current_bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
 	
@@ -243,7 +303,7 @@ func _execute_platform_leap(plat: RhythmPlatform, bpm: float) -> void:
 	var seconds_per_beat = Rhythm.getTimePerBeat(bpm)
 	var leap_duration = seconds_per_beat * 0.65 # Smooth aerial flight
 	
-	var target_pos = plat.get_landing_position()
+	var target_pos = plat.get_landing_position(global_position)
 	var start_pos = global_position
 	var apex_y = min(start_pos.y, target_pos.y) - 90.0 # High jump arc above both points
 	

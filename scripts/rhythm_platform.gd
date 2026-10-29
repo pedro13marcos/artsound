@@ -5,11 +5,21 @@ class_name RhythmPlatform
 @export var landing_offset_y: float = -65.0 # Landing point above the platform surface
 ## Maximum distance (in pixels) within which the player can interact.
 ## Set to 0 to disable the range restriction.
-@export var max_interaction_range: float = 400.0
+@export var max_interaction_range: float = 600.0
+
+# Light and glow settings
+@export var light_color: Color = Color(1.0, 1.0, 1.0, 1.0)
+@export var light_energy: float = 1.2
+@export var light_radius_scale: float = 1.8
 
 var reticle: Node2D = null
 var base_modulate: Color = Color(0.133, 0.133, 0.133, 1.0)
 @onready var sprite: Sprite2D = $Sprite2D
+@onready var collision_shape: CollisionShape2D = $CollisionShape2D
+
+var point_light: PointLight2D = null
+var last_pulsed_beat: int = -1
+var soundtrack_ref: AudioStreamPlayer = null
 
 func _ready() -> void:
 	add_to_group("lockable_targets")
@@ -17,19 +27,20 @@ func _ready() -> void:
 	if sprite:
 		base_modulate = sprite.modulate
 	_create_reticle()
+	_create_light()
 
 func _create_reticle() -> void:
 	reticle = Node2D.new()
 	reticle.name = "PlatformReticle"
 	reticle.visible = false
+	reticle.top_level = true # Draw at world position so corner offset isn't affected by parent transform
 	add_child(reticle)
 	
 	# Drawing callback for platform jump landing beacon
 	var reticle_drawer = Control.new()
 	reticle_drawer.draw.connect(func():
 		var col = Color(0.3, 0.85, 1.0, 0.95)
-		# Landing marker above platform
-		var center = Vector2(0, landing_offset_y)
+		var center = Vector2.ZERO
 		reticle_drawer.draw_arc(center, 18.0, 0, TAU, 32, col, 2.5)
 		reticle_drawer.draw_circle(center, 4.0, Color.WHITE)
 		# Arrow pointing down to landing spot
@@ -39,10 +50,79 @@ func _create_reticle() -> void:
 	)
 	reticle.add_child(reticle_drawer)
 
+func _create_light() -> void:
+	point_light = PointLight2D.new()
+	point_light.name = "RhythmLight"
+	var glow_tex = load("res://image/light_glow.png")
+	if glow_tex:
+		point_light.texture = glow_tex
+	point_light.color = light_color
+	point_light.energy = 0.3
+	point_light.texture_scale = light_radius_scale
+	point_light.position = Vector2(0, landing_offset_y)
+	add_child(point_light)
+
+func _process(_delta: float) -> void:
+	if soundtrack_ref == null or not soundtrack_ref.playing:
+		soundtrack_ref = get_tree().current_scene.find_child("soundTrack", true, false)
+		if soundtrack_ref == null or not soundtrack_ref.playing:
+			return
+			
+	var bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
+	var seconds_per_beat = Rhythm.getTimePerBeat(bpm)
+	var song_pos = Rhythm.getSongPosition(soundtrack_ref)
+	var current_beat = int(floor(song_pos / seconds_per_beat))
+	
+	if current_beat > last_pulsed_beat:
+		last_pulsed_beat = current_beat
+		_pulse_light(seconds_per_beat)
+
+func _pulse_light(seconds_per_beat: float) -> void:
+	if point_light == null:
+		return
+	var tw = create_tween()
+	point_light.energy = light_energy
+	point_light.texture_scale = light_radius_scale * 1.3
+	tw.set_parallel(true)
+	tw.tween_property(point_light, "energy", 0.25, seconds_per_beat * 0.7)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(point_light, "texture_scale", light_radius_scale, seconds_per_beat * 0.7)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+## Calculate the corner of the platform closest to the player
+func get_closest_corner_to(player_pos: Vector2) -> Vector2:
+	var half_w = 100.0
+	var half_h = 30.0
+	if collision_shape and collision_shape.shape is RectangleShape2D:
+		var rect = collision_shape.shape as RectangleShape2D
+		half_w = (rect.size.x * scale.x) / 2.0
+		half_h = (rect.size.y * scale.y) / 2.0
+	elif sprite and sprite.texture:
+		half_w = (sprite.texture.get_width() * sprite.scale.x * scale.x) / 2.0
+		half_h = (sprite.texture.get_height() * sprite.scale.y * scale.y) / 2.0
+		
+	var top_surface_y = global_position.y - half_h + landing_offset_y
+	var left_corner = Vector2(global_position.x - half_w, top_surface_y)
+	var right_corner = Vector2(global_position.x + half_w, top_surface_y)
+	
+	if player_pos.distance_to(left_corner) <= player_pos.distance_to(right_corner):
+		return left_corner
+	else:
+		return right_corner
+
+func update_reticle_position(player_pos: Vector2) -> void:
+	if reticle and reticle.visible:
+		reticle.global_position = get_closest_corner_to(player_pos)
+
 func set_targeted(is_targeted: bool) -> void:
 	if reticle:
 		reticle.visible = is_targeted
 		if is_targeted:
+			var player = get_tree().current_scene.find_child("Player", true, false)
+			if player:
+				reticle.global_position = get_closest_corner_to(player.global_position)
+			else:
+				reticle.global_position = get_landing_position()
 			var tw = create_tween()
 			reticle.scale = Vector2(1.3, 1.3)
 			tw.tween_property(reticle, "scale", Vector2(1.0, 1.0), 0.18)\
@@ -71,5 +151,7 @@ func get_upcoming_rhythm_cues(current_song_time: float, lookahead_duration: floa
 			})
 	return cues
 
-func get_landing_position() -> Vector2:
+func get_landing_position(player_pos: Vector2 = Vector2.ZERO) -> Vector2:
+	if player_pos != Vector2.ZERO:
+		return get_closest_corner_to(player_pos)
 	return global_position + Vector2(0, landing_offset_y)
