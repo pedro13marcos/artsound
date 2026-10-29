@@ -2,7 +2,7 @@ shader_type canvas_item;
 render_mode blend_mix;
 
 uniform vec4 glow_color : source_color = vec4(1.0, 0.2, 0.25, 1.0);
-uniform float glow_thickness : hint_range(0.0, 10.0) = 2.5;
+uniform float glow_thickness : hint_range(0.0, 20.0) = 6.0;
 uniform float intensity : hint_range(0.0, 3.0) = 1.0;
 
 void fragment() {

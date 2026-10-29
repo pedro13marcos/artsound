@@ -117,7 +117,7 @@ position = Vector2(1677, 1696)
 size = Vector2(192.355, 28)
 
 [node name="BladeMaster" parent="." unique_id=1960033870 instance=ExtResource("7_enemy_scn")]
-position = Vector2(1256, 1808)
+position = Vector2(1256, 1872)
 
 [node name="Player" parent="." unique_id=50129849 instance=ExtResource("2_player_scn")]
 position = Vector2(800, 2655)

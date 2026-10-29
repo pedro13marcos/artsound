@@ -71,7 +71,7 @@ position = Vector2(2008.0002, -128)
 size = Vector2(405, 59)
 
 [node name="Interaction point" parent="." unique_id=251095136 instance=ExtResource("7_enemy_scn")]
-position = Vector2(2687, 485)
+position = Vector2(2687, 550)
 
 [node name="RhythmHUD" parent="." unique_id=987802570 instance=ExtResource("5_rhud")]
 
