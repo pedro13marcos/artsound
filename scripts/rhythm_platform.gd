@@ -49,6 +49,7 @@ var soundtrack_ref: AudioStreamPlayer = null
 var collision_shape: CollisionShape2D = null
 var visual_rect: Control = null
 var sprite_node: Node2D = null
+var _own_rect_shape: RectangleShape2D = null
 
 func _ready() -> void:
 	add_to_group("lockable_targets")
@@ -70,14 +71,18 @@ func _resolve_child_nodes() -> void:
 		sprite_node = get_node_or_null("Sprite2D")
 
 func _apply_size() -> void:
+	if not is_inside_tree():
+		return
 	_resolve_child_nodes()
 		
 	if collision_shape:
-		# If it's a standalone modular platform with custom size property
+		# If it's a standalone modular platform with custom size property,
+		# give this instance its own dedicated RectangleShape2D so instances never overwrite each other!
 		if visual_rect != null:
-			if collision_shape.shape == null or not collision_shape.shape is RectangleShape2D:
-				collision_shape.shape = RectangleShape2D.new()
-			(collision_shape.shape as RectangleShape2D).size = size
+			if _own_rect_shape == null:
+				_own_rect_shape = RectangleShape2D.new()
+			_own_rect_shape.size = size
+			collision_shape.shape = _own_rect_shape
 			collision_shape.position = Vector2.ZERO
 		
 	if visual_rect:
@@ -183,8 +188,8 @@ func get_closest_corner_to(player_pos: Vector2) -> Vector2:
 	var half_w = ext.x
 	var half_h = ext.y
 	var top_surface_y = global_position.y - half_h + landing_offset_y
-	var left_corner = Vector2(global_position.x - half_w, top_surface_y)
-	var right_corner = Vector2(global_position.x + half_w, top_surface_y)
+	var left_corner = Vector2(global_position.x - half_w + reticle_edge_inset, top_surface_y)
+	var right_corner = Vector2(global_position.x + half_w - reticle_edge_inset, top_surface_y)
 	
 	if player_pos.distance_to(left_corner) <= player_pos.distance_to(right_corner):
 		return left_corner

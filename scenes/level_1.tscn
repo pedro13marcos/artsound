@@ -30,9 +30,9 @@ script = ExtResource("9_wall")
 size = Vector2(36, 627)
 
 [node name="CorridorRightWall" type="StaticBody2D" parent="Walls" unique_id=1250834181]
-position = Vector2(1128, 1884)
+position = Vector2(1128, 1920)
 script = ExtResource("9_wall")
-size = Vector2(36, 867)
+size = Vector2(36, 831)
 
 [node name="OuterLeftWall" type="StaticBody2D" parent="Walls" unique_id=1044089100]
 position = Vector2(108, 645)
@@ -66,6 +66,7 @@ position = Vector2(1020, 1890)
 entity_name = "Enemy Floor"
 size = Vector2(1230, 36)
 max_interaction_range = 1300.0
+reticle_edge_inset = 30.0
 
 [node name="UpperLedge" parent="Platforms" unique_id=1204585773 instance=ExtResource("6_plat_scn")]
 position = Vector2(900, 1473)

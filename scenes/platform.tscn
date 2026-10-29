@@ -4,6 +4,7 @@
 [ext_resource type="Texture2D" path="res://icon.svg" id="2_icon"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_plat"]
+resource_local_to_scene = true
 size = Vector2(200, 36)
 
 [node name="Platform" type="StaticBody2D"]

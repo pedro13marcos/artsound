@@ -326,6 +326,8 @@ func _execute_platform_leap(plat: RhythmPlatform, bpm: float) -> void:
 	y_tween.finished.connect(func():
 		is_rhythm_hopping = false
 		velocity = Vector2.ZERO
+		# Perform a collision snap onto the floor surface so physics detects floor immediately
+		move_and_slide()
 	)
 
 # Subtle shake/stumble when pressing off-beat
