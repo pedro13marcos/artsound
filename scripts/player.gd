@@ -24,7 +24,7 @@ const STICK_DEADZONE: float = 0.5
 @export var mouse_flick_threshold: float = 25.0 # Minimum mouse motion delta (pixels) to trigger flick
 var mouse_flick_cooldown: float = 0.0
 
-@export var max_los_distance: float = 800.0 # Maximum distance to look/interact via line of sight
+@export var max_los_distance: float = 1000.0 # Maximum distance to look/interact via line of sight
 @onready var los_raycast: RayCast2D = null
 
 # Rhythm Hop, Smooth Walk, and Leap State

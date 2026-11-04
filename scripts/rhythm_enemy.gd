@@ -11,9 +11,9 @@ enum CombatSubState { READY, ATTACKING, SHARPENING }
 @export var entity_name: String = "Blade Master"
 ## Maximum distance (in pixels) within which the player can interact.
 ## Set to 0 to disable the range restriction.
-@export var max_interaction_range: float = 350.0
+@export var max_interaction_range: float = 900.0
 ## Horizontal raycast distance (left and right) to detect the player on the same horizontal line.
-@export var line_detection_range: float = 650.0
+@export var line_detection_range: float = 900.0
 ## Enemy health (2 attacks / perfect parries kill the enemy)
 @export var max_health: int = 2
 
@@ -46,6 +46,8 @@ var sprite_node: Sprite2D = null
 var outline_material: ShaderMaterial = null
 var ray_left: RayCast2D = null
 var ray_right: RayCast2D = null
+var rays_left: Array[RayCast2D] = []
+var rays_right: Array[RayCast2D] = []
 var hurtbox_area: Area2D = null
 var hitbox_left: Area2D = null
 var hitbox_right: Area2D = null
@@ -58,6 +60,7 @@ var _pose_reset_timer: float = 0.0
 var _hitbox_active_timer: float = 0.0
 var is_staggered: bool = false
 var _stagger_timer: float = 0.0
+var _must_sharpen_before_attacking: bool = true
 var health_bar_container: Node2D = null
 var health_bar_fill: ColorRect = null
 
@@ -78,29 +81,46 @@ func _find_sprite() -> void:
 		sprite_node = get_node_or_null("Sprite2D2")
 
 func _setup_raycasts() -> void:
-	ray_left = get_node_or_null("LineRaycastLeft")
-	if ray_left == null:
-		ray_left = RayCast2D.new()
-		ray_left.name = "LineRaycastLeft"
-		ray_left.position = Vector2(0, -62)
-		add_child(ray_left)
-	ray_left.enabled = true
-	ray_left.exclude_parent = true
-	ray_left.collide_with_bodies = true
-	ray_left.collide_with_areas = false
-	ray_left.target_position = Vector2(-line_detection_range, 0)
-
-	ray_right = get_node_or_null("LineRaycastRight")
-	if ray_right == null:
-		ray_right = RayCast2D.new()
-		ray_right.name = "LineRaycastRight"
-		ray_right.position = Vector2(0, -62)
-		add_child(ray_right)
-	ray_right.enabled = true
-	ray_right.exclude_parent = true
-	ray_right.collide_with_bodies = true
-	ray_right.collide_with_areas = false
-	ray_right.target_position = Vector2(line_detection_range, 0)
+	rays_left.clear()
+	rays_right.clear()
+	
+	# Multi-height raycasts (head, chest, feet) across a full 900px line of sight
+	var y_offsets = [-105.0, -62.0, -20.0]
+	for i in range(y_offsets.size()):
+		var y_off = y_offsets[i]
+		var suffix = "" if i == 1 else str(i)
+		
+		# Left Ray
+		var rl = get_node_or_null("LineRaycastLeft" + suffix)
+		if rl == null:
+			rl = RayCast2D.new()
+			rl.name = "LineRaycastLeft" + suffix
+			add_child(rl)
+		rl.position = Vector2(0, y_off)
+		rl.enabled = true
+		rl.exclude_parent = true
+		rl.collide_with_bodies = true
+		rl.collide_with_areas = false
+		rl.target_position = Vector2(-line_detection_range, 0)
+		rays_left.append(rl)
+		if i == 1:
+			ray_left = rl
+		
+		# Right Ray
+		var rr = get_node_or_null("LineRaycastRight" + suffix)
+		if rr == null:
+			rr = RayCast2D.new()
+			rr.name = "LineRaycastRight" + suffix
+			add_child(rr)
+		rr.position = Vector2(0, y_off)
+		rr.enabled = true
+		rr.exclude_parent = true
+		rr.collide_with_bodies = true
+		rr.collide_with_areas = false
+		rr.target_position = Vector2(line_detection_range, 0)
+		rays_right.append(rr)
+		if i == 1:
+			ray_right = rr
 
 func _setup_combat_areas() -> void:
 	# 1. Hurtbox (Enemy defense / vulnerability collision)
@@ -214,33 +234,57 @@ func _update_line_of_sight_state() -> void:
 	var detected_player: Node2D = null
 	var detected_dir: int = 0
 
-	if ray_left and ray_left.is_colliding():
-		var col_l = ray_left.get_collider()
-		if _is_player_node(col_l):
-			detected_player = col_l
-			detected_dir = -1
+	# Check multi-height left rays
+	for rl in rays_left:
+		if rl and rl.is_colliding():
+			var col_l = rl.get_collider()
+			if _is_player_node(col_l):
+				detected_player = col_l
+				detected_dir = -1
+				break
 
-	if detected_player == null and ray_right and ray_right.is_colliding():
-		var col_r = ray_right.get_collider()
-		if _is_player_node(col_r):
-			detected_player = col_r
-			detected_dir = 1
+	# Check multi-height right rays
+	if detected_player == null:
+		for rr in rays_right:
+			if rr and rr.is_colliding():
+				var col_r = rr.get_collider()
+				if _is_player_node(col_r):
+					detected_player = col_r
+					detected_dir = 1
+					break
 
 	if detected_player != null:
 		facing_dir = detected_dir
 		if current_mode != EnemyMode.COMBAT:
 			current_mode = EnemyMode.COMBAT
-			# Notice player -> auto focus on this enemy!
+			_must_sharpen_before_attacking = true
+			# Auto focus on this enemy when he notices player
 			if detected_player.has_method("set_lock_target"):
 				detected_player.set_lock_target(self)
+			# Start on the sharpening animation when he notices us!
+			_trigger_notice_sharpening()
 		# Keep idle/ready pose oriented toward the player's side
-		if current_sub_state == CombatSubState.READY and sprite_node:
+		elif current_sub_state == CombatSubState.READY and sprite_node:
 			sprite_node.flip_h = (facing_dir > 0)
 	else:
 		if current_mode == EnemyMode.COMBAT:
 			current_mode = EnemyMode.IDLE
+			_must_sharpen_before_attacking = true
 			_disable_attack_hitboxes()
 			_apply_idle_pose()
+
+func _trigger_notice_sharpening() -> void:
+	current_sub_state = CombatSubState.SHARPENING
+	is_vulnerable = true
+	_disable_attack_hitboxes()
+	if sprite_node:
+		sprite_node.texture = tex_sharpen_left
+		sprite_node.flip_h = (facing_dir > 0)
+	
+	var bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
+	var seconds_per_beat = Rhythm.getTimePerBeat(bpm)
+	_pulse_light("sharpen", seconds_per_beat)
+	_pose_reset_timer = seconds_per_beat * 1.25
 
 func _is_player_node(node: Object) -> bool:
 	if node == null or not (node is Node2D):
@@ -287,15 +331,15 @@ func _on_rhythm_cue(action_type: String, beat_offset: float, seconds_per_beat: f
 		_perform_combat_sharpen(beat_offset, seconds_per_beat)
 
 func _perform_combat_attack(beat_offset: float, seconds_per_beat: float) -> void:
-	if is_staggered:
+	if is_staggered or is_dead or _must_sharpen_before_attacking:
 		return
 	current_sub_state = CombatSubState.ATTACKING
 	is_vulnerable = false
 	_disable_attack_hitboxes()
 
 	# Both attacks are directed toward the player's side (facing_dir):
-	# Alternate between Sword 1 and Sword 2 across the 3 attack beats (0.0, 0.5, 1.0)
-	var use_second_sword: bool = is_equal_approx(beat_offset, 0.5)
+	# Alternate between Sword 1 and Sword 2 across the 3 attack beats (2.0, 2.5, 3.0)
+	var use_second_sword: bool = is_equal_approx(beat_offset, 2.5)
 
 	if sprite_node:
 		var target_tex = tex_attack_right if use_second_sword else tex_attack_left
@@ -312,25 +356,26 @@ func _perform_combat_attack(beat_offset: float, seconds_per_beat: float) -> void
 
 	# Activate the attack collision area on the side the enemy is attacking
 	_enable_attack_hitbox_for_side(facing_dir)
-	var hold_beats = 0.42 if beat_offset < 0.9 else 0.75
+	var hold_beats = 0.42 if beat_offset < 2.9 else 0.75
 	_hitbox_active_timer = seconds_per_beat * (hold_beats * 0.75)
 	_pose_reset_timer = seconds_per_beat * hold_beats
 
 func _perform_combat_sharpen(beat_offset: float, seconds_per_beat: float) -> void:
+	_must_sharpen_before_attacking = false
 	current_sub_state = CombatSubState.SHARPENING
 	is_vulnerable = true
 	_disable_attack_hitboxes()
 
 	if sprite_node:
-		# Beat 2.0: Sharpen Left Blade | Beat 3.0: Sharpen Right Blade
-		if beat_offset < 2.5:
+		# Beat 0.0: Sharpen Left Blade | Beat 1.0: Sharpen Right Blade
+		if beat_offset < 0.5:
 			sprite_node.texture = tex_sharpen_left
 		else:
 			sprite_node.texture = tex_sharpen_right
 		# Orient toward player's side
 		sprite_node.flip_h = (facing_dir > 0)
 
-	_pose_reset_timer = seconds_per_beat * 0.80
+	_pose_reset_timer = seconds_per_beat * 0.85
 
 func _apply_idle_pose() -> void:
 	current_sub_state = CombatSubState.READY
@@ -564,17 +609,18 @@ func set_targeted(is_targeted: bool) -> void:
 const PATTERN_DURATION_BEATS = 4.0
 
 # Relative beat offsets within a 4-beat measure:
-# Beat 0.0: Attack 1 (eighth note)
-# Beat 0.5: Attack 2 (eighth note)
-# Beat 1.0: Attack 3 (quarter note)
-# Beat 2.0: Sharpen 1 (quarter note - opportunity to hit!)
-# Beat 3.0: Sharpen 2 (quarter note - opportunity to hit!)
+# Starts on Sharpening (telegraph & player preparation) followed by Attacks!
+# Beat 0.0: Sharpen 1 (quarter note - opportunity to hit / prepare!)
+# Beat 1.0: Sharpen 2 (quarter note - opportunity to hit / prepare!)
+# Beat 2.0: Attack 1 (eighth note)
+# Beat 2.5: Attack 2 (eighth note)
+# Beat 3.0: Attack 3 (quarter note)
 var action_sequence = [
-	{"beat_offset": 0.0, "type": "attack"},
-	{"beat_offset": 0.5, "type": "attack"},
-	{"beat_offset": 1.0, "type": "attack"},
-	{"beat_offset": 2.0, "type": "sharpen"},
-	{"beat_offset": 3.0, "type": "sharpen"}
+	{"beat_offset": 0.0, "type": "sharpen"},
+	{"beat_offset": 1.0, "type": "sharpen"},
+	{"beat_offset": 2.0, "type": "attack"},
+	{"beat_offset": 2.5, "type": "attack"},
+	{"beat_offset": 3.0, "type": "attack"}
 ]
 
 # This function is automatically queried by RhythmHUD when this enemy is locked on!

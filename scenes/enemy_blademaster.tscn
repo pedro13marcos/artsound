@@ -29,11 +29,11 @@ shape = SubResource("RectangleShape2D_enemy")
 
 [node name="LineRaycastLeft" type="RayCast2D" parent="."]
 position = Vector2(0, -62)
-target_position = Vector2(-650, 0)
+target_position = Vector2(-900, 0)
 
 [node name="LineRaycastRight" type="RayCast2D" parent="."]
 position = Vector2(0, -62)
-target_position = Vector2(650, 0)
+target_position = Vector2(900, 0)
 
 [node name="HurtboxArea" type="Area2D" parent="."]
 position = Vector2(0, -62)
