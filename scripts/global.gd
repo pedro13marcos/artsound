@@ -4,6 +4,53 @@ extends Node2D
 # "auto" = Automatic (detects OS locale), or explicit locale code: "pt_BR", "en", "es", "fr", "ja", "zh"
 var current_language_mode: String = "auto"
 
+# Player Life Points (HP) State
+signal player_health_changed(current_hp: int, max_hp: int)
+signal player_died()
+
+# Debug Settings
+signal debug_hitboxes_toggled(enabled: bool)
+var debug_show_hitboxes: bool = false:
+	set(val):
+		debug_show_hitboxes = val
+		if is_inside_tree():
+			get_tree().debug_collisions_hint = val
+		debug_hitboxes_toggled.emit(val)
+		_update_debug_hitbox_overlay()
+
+var _debug_overlay_node: Node2D = null
+
+func set_debug_hitboxes(enabled: bool) -> void:
+	debug_show_hitboxes = enabled
+
+var player_max_health: int = 3
+var player_current_health: int = 3
+
+func reset_player_health() -> void:
+	player_current_health = player_max_health
+	player_health_changed.emit(player_current_health, player_max_health)
+
+func damage_player(amount: int = 1) -> bool:
+	if player_current_health <= 0:
+		return false
+	player_current_health = max(0, player_current_health - amount)
+	player_health_changed.emit(player_current_health, player_max_health)
+	if player_current_health == 0:
+		player_died.emit()
+	return true
+
+func heal_player(amount: int = 1) -> bool:
+	if player_current_health >= player_max_health:
+		return false
+	player_current_health = min(player_max_health, player_current_health + amount)
+	player_health_changed.emit(player_current_health, player_max_health)
+	return true
+
+func expand_player_max_health(amount: int = 1) -> void:
+	player_max_health += amount
+	player_current_health = min(player_max_health, player_current_health + amount)
+	player_health_changed.emit(player_current_health, player_max_health)
+
 const SUPPORTED_LANGUAGES: Array[Dictionary] = [
 	{"id": "auto",  "label_key": "lang_auto", "native_name": ""},
 	{"id": "pt_BR", "label_key": "",          "native_name": "Português (BR)"},
@@ -97,7 +144,7 @@ func _create_watermark() -> void:
 	
 	var label = Label.new()
 	label.name = "WatermarkLabel"
-	label.text = "pre-alpha version 0.18"
+	label.text = "pre-alpha version 0.20"
 	
 	# Add child to the CanvasLayer first so anchors calculate against the viewport
 	canvas.add_child(label)
@@ -117,3 +164,29 @@ func _create_watermark() -> void:
 	label.add_theme_constant_override("shadow_offset_y", 1)
 	
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+func _update_debug_hitbox_overlay() -> void:
+	if not is_inside_tree():
+		return
+	var scene = get_tree().current_scene
+	if scene == null:
+		return
+	
+	if debug_show_hitboxes:
+		if _debug_overlay_node == null or not is_instance_valid(_debug_overlay_node) or _debug_overlay_node.get_parent() != scene:
+			_debug_overlay_node = _create_debug_overlay_node()
+			scene.add_child(_debug_overlay_node)
+		_debug_overlay_node.visible = true
+		_debug_overlay_node.queue_redraw()
+	else:
+		if _debug_overlay_node != null and is_instance_valid(_debug_overlay_node):
+			_debug_overlay_node.visible = false
+			_debug_overlay_node.queue_redraw()
+
+func _create_debug_overlay_node() -> Node2D:
+	var overlay = Node2D.new()
+	overlay.name = "HitboxDebugOverlay"
+	overlay.process_mode = Node.PROCESS_MODE_ALWAYS
+	overlay.z_index = 100
+	overlay.set_script(load("res://scripts/hitbox_debug_overlay.gd"))
+	return overlay

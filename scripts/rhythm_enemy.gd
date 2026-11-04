@@ -54,6 +54,8 @@ var hitbox_right_shape: CollisionShape2D = null
 var last_pulse_time: float = -999.0
 var _pose_reset_timer: float = 0.0
 var _hitbox_active_timer: float = 0.0
+var is_staggered: bool = false
+var _stagger_timer: float = 0.0
 
 func _ready() -> void:
 	current_health = max_health
@@ -109,16 +111,16 @@ func _setup_combat_areas() -> void:
 		hurtbox_area.add_child(hurt_col)
 		add_child(hurtbox_area)
 
-	# 2. Left Attack Hitbox (Matches left sword slash arc outside left of body)
+	# 2. Left Attack Hitbox (Matches horizontal rapier thrust to the left)
 	hitbox_left = get_node_or_null("AttackHitboxLeft")
 	if hitbox_left == null:
 		hitbox_left = Area2D.new()
 		hitbox_left.name = "AttackHitboxLeft"
-		hitbox_left.position = Vector2(-46, -62)
+		hitbox_left.position = Vector2(-68, -55)
 		var col_l = CollisionShape2D.new()
 		col_l.name = "CollisionShape2D"
 		var rect_l = RectangleShape2D.new()
-		rect_l.size = Vector2(56, 124)
+		rect_l.size = Vector2(96, 40)
 		col_l.shape = rect_l
 		col_l.disabled = true
 		hitbox_left.add_child(col_l)
@@ -127,16 +129,16 @@ func _setup_combat_areas() -> void:
 	if not hitbox_left.body_entered.is_connected(_on_attack_hitbox_left_body_entered):
 		hitbox_left.body_entered.connect(_on_attack_hitbox_left_body_entered)
 
-	# 3. Right Attack Hitbox (Matches right sword slash arc outside right of body)
+	# 3. Right Attack Hitbox (Matches horizontal rapier thrust to the right)
 	hitbox_right = get_node_or_null("AttackHitboxRight")
 	if hitbox_right == null:
 		hitbox_right = Area2D.new()
 		hitbox_right.name = "AttackHitboxRight"
-		hitbox_right.position = Vector2(46, -62)
+		hitbox_right.position = Vector2(68, -55)
 		var col_r = CollisionShape2D.new()
 		col_r.name = "CollisionShape2D"
 		var rect_r = RectangleShape2D.new()
-		rect_r.size = Vector2(56, 124)
+		rect_r.size = Vector2(96, 40)
 		col_r.shape = rect_r
 		col_r.disabled = true
 		hitbox_right.add_child(col_r)
@@ -180,6 +182,13 @@ func _create_reticle() -> void:
 	reticle.add_child(reticle_drawer)
 
 func _physics_process(delta: float) -> void:
+	if is_staggered:
+		_stagger_timer -= delta
+		if _stagger_timer <= 0.0:
+			is_staggered = false
+			_apply_idle_pose()
+		return
+
 	_update_line_of_sight_state()
 
 	# Disable attack hitboxes once the strike window finishes
@@ -266,6 +275,8 @@ func _on_rhythm_cue(action_type: String, beat_offset: float, seconds_per_beat: f
 		_perform_combat_sharpen(beat_offset, seconds_per_beat)
 
 func _perform_combat_attack(beat_offset: float, seconds_per_beat: float) -> void:
+	if is_staggered:
+		return
 	current_sub_state = CombatSubState.ATTACKING
 	is_vulnerable = false
 	_disable_attack_hitboxes()
@@ -275,22 +286,11 @@ func _perform_combat_attack(beat_offset: float, seconds_per_beat: float) -> void
 	var use_second_sword: bool = is_equal_approx(beat_offset, 0.5)
 
 	if sprite_node:
-		if facing_dir < 0:
-			# Player is on the LEFT side -> Both attacks slash into the LEFT hitbox area
-			if not use_second_sword:
-				sprite_node.texture = tex_attack_left
-				sprite_node.flip_h = false
-			else:
-				sprite_node.texture = tex_attack_right
-				sprite_node.flip_h = true
-		else:
-			# Player is on the RIGHT side -> Both attacks slash into the RIGHT hitbox area
-			if not use_second_sword:
-				sprite_node.texture = tex_attack_right
-				sprite_node.flip_h = false
-			else:
-				sprite_node.texture = tex_attack_left
-				sprite_node.flip_h = true
+		var target_tex = tex_attack_right if use_second_sword else tex_attack_left
+		sprite_node.texture = target_tex
+		# Both textures thrust out to the right by default.
+		# When player is on the left (facing_dir < 0), flip horizontally to thrust left!
+		sprite_node.flip_h = (facing_dir < 0)
 
 		# Quick combat lunge punch scale feedback
 		sprite_node.scale = Vector2(0.122, 0.122)
@@ -366,6 +366,25 @@ func _trigger_player_hit(player_body: Node2D, side: String) -> void:
 	player_hit.emit(player_body, side, last_pulse_time)
 	if player_body.has_method("take_damage"):
 		player_body.take_damage(1, self)
+
+## Called when the player successfully parries the enemy's attack
+func on_parried_by_player(player: Node2D) -> void:
+	is_staggered = true
+	_stagger_timer = 0.85
+	_disable_attack_hitboxes()
+	is_vulnerable = true # Briefly open to counter-attacks
+	
+	if sprite_node:
+		var tw = create_tween()
+		var recoil_dir = 1.0 if facing_dir < 0 else -1.0
+		tw.tween_property(sprite_node, "position:x", recoil_dir * 20.0, 0.1)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(sprite_node, "position:x", 0.0, 0.25)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+		
+		# Cyan/golden stagger flash
+		tw.parallel().tween_property(sprite_node, "modulate", Color(0.4, 0.9, 1.4, 1.0), 0.12)
+		tw.tween_property(sprite_node, "modulate", Color.WHITE, 0.3)
 
 ## Prepared defense / damage receiver for when the player's attack is implemented.
 ## Returns true if the hit landed during the green sharpening/vulnerable window,

@@ -14,3 +14,11 @@ pause_quit,Sair para a Área de Trabalho,Quit to Desktop,Salir al Escritorio,Qui
 options_title,OPÇÕES,OPTIONS,OPCIONES,OPTIONS,オプション,选项
 options_fullscreen," Modo Tela Cheia"," Fullscreen Mode"," Modo Pantalla Completa"," Mode Plein Écran"," フルスクリーンモード"," 全屏模式"
 options_back,Voltar,Back,Volver,Retour,戻る,返回
+game_over_title,FIM DE JOGO,GAME OVER,FIN DEL JUEGO,PARTIE TERMINÉE,ゲームオーバー,游戏结束
+game_over_restart,Reiniciar,Restart,Reiniciar,Recommencer,再開,重新开始
+game_over_menu,Menu Principal,Main Menu,Menú Principal,Menu Principal,メインメニュー,主菜单
+game_over_quit,Sair do Jogo,Quit Game,Salir del Juego,Quitter le Jeu,ゲーム終了,退出游戏
+pause_debug,Depuração,Debug,Depuración,Débogage,デバッグ,调试
+debug_title,DEPURAÇÃO,DEBUG,DEPURACIÓN,DÉBOGAGE,デバッグ,调试
+debug_hitboxes," Visualizar Hitboxes"," Show Hitboxes"," Mostrar Hitboxes"," Afficher les Hitboxes"," ヒットボックスを表示"," 显示碰撞箱"
+debug_back,Voltar,Back,Volver,Retour,戻る,返回

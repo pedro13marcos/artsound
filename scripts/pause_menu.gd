@@ -3,8 +3,10 @@ class_name PauseMenu
 
 @onready var main_container: VBoxContainer = $Control/VBoxContainer
 @onready var options_container: VBoxContainer = $Control/OptionsContainer
+@onready var debug_container: VBoxContainer = $Control/DebugContainer
 @onready var fullscreen_check: CheckBox = $Control/OptionsContainer/FullscreenCheck
 @onready var language_select: OptionButton = $Control/OptionsContainer/LanguageRow/LanguageSelect
+@onready var hitbox_check: CheckBox = $Control/DebugContainer/HitboxCheck
 @onready var resume_btn: Button = $Control/VBoxContainer/Resume
 
 var is_paused: bool = false
@@ -14,11 +16,13 @@ func _ready() -> void:
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	visible = false
 	options_container.visible = false
+	debug_container.visible = false
 	main_container.visible = true
 	
 	# Set current fullscreen state
 	var current_mode = DisplayServer.window_get_mode()
 	fullscreen_check.button_pressed = (current_mode == DisplayServer.WINDOW_MODE_FULLSCREEN or current_mode == DisplayServer.WINDOW_MODE_EXCLUSIVE_FULLSCREEN)
+	hitbox_check.button_pressed = Global.debug_show_hitboxes
 	_populate_language_options()
 
 func _populate_language_options() -> void:
@@ -46,6 +50,8 @@ func _unhandled_input(event: InputEvent) -> void:
 	if event.is_action_pressed("ui_cancel"):
 		if options_container.visible:
 			_on_options_back_pressed()
+		elif debug_container.visible:
+			_on_debug_back_pressed()
 		else:
 			toggle_pause()
 		get_viewport().set_input_as_handled()
@@ -59,6 +65,8 @@ func toggle_pause() -> void:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 		main_container.visible = true
 		options_container.visible = false
+		debug_container.visible = false
+		hitbox_check.button_pressed = Global.debug_show_hitboxes
 		_populate_language_options()
 		resume_btn.grab_focus()
 	else:
@@ -69,6 +77,7 @@ func _on_resume_button_up() -> void:
 
 func _on_options_button_up() -> void:
 	main_container.visible = false
+	debug_container.visible = false
 	options_container.visible = true
 	_populate_language_options()
 	fullscreen_check.grab_focus()
@@ -77,6 +86,21 @@ func _on_options_back_pressed() -> void:
 	options_container.visible = false
 	main_container.visible = true
 	resume_btn.grab_focus()
+
+func _on_debug_button_up() -> void:
+	main_container.visible = false
+	options_container.visible = false
+	debug_container.visible = true
+	hitbox_check.button_pressed = Global.debug_show_hitboxes
+	hitbox_check.grab_focus()
+
+func _on_debug_back_pressed() -> void:
+	debug_container.visible = false
+	main_container.visible = true
+	resume_btn.grab_focus()
+
+func _on_hitbox_check_toggled(button_pressed: bool) -> void:
+	Global.set_debug_hitboxes(button_pressed)
 
 func _on_fullscreen_toggled(button_pressed: bool) -> void:
 	if button_pressed:

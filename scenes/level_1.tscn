@@ -9,6 +9,8 @@
 [ext_resource type="PackedScene" uid="uid://brgmvks1ali2w" path="res://scenes/enemy_blademaster.tscn" id="7_enemy_scn"]
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="8_cam"]
 [ext_resource type="Script" uid="uid://xquvibblqfvh" path="res://scripts/wall_block.gd" id="9_wall"]
+[ext_resource type="PackedScene" path="res://scenes/heart_container.tscn" id="10_heart_cnt"]
+[ext_resource type="PackedScene" path="res://scenes/heart_expansion.tscn" id="11_hexp"]
 
 [node name="Level1" type="Node2D" unique_id=753066007]
 script = ExtResource("1_level")
@@ -118,6 +120,12 @@ size = Vector2(192.355, 28)
 
 [node name="BladeMaster" parent="." unique_id=1960033870 instance=ExtResource("7_enemy_scn")]
 position = Vector2(1256, 1872)
+
+[node name="HeartContainer" parent="." instance=ExtResource("10_heart_cnt")]
+position = Vector2(900, 1430)
+
+[node name="HeartExpansion" parent="." instance=ExtResource("11_hexp")]
+position = Vector2(230, 795)
 
 [node name="Player" parent="." unique_id=50129849 instance=ExtResource("2_player_scn")]
 position = Vector2(800, 2655)

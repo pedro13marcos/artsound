@@ -81,6 +81,13 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
 text = "pause_options"
 
+[node name="Debug" type="Button" parent="Control/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 26
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
+text = "pause_debug"
+
 [node name="MainMenu" type="Button" parent="Control/VBoxContainer"]
 layout_mode = 2
 theme_override_font_sizes/font_size = 26
@@ -148,10 +155,50 @@ theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
 theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
 text = "options_back"
 
+[node name="DebugContainer" type="VBoxContainer" parent="Control"]
+visible = false
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -180.0
+offset_top = -150.0
+offset_right = 180.0
+offset_bottom = 150.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 20
+
+[node name="DebugTitle" type="Label" parent="Control/DebugContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 50
+text = "debug_title"
+horizontal_alignment = 1
+
+[node name="HSeparator" type="HSeparator" parent="Control/DebugContainer"]
+layout_mode = 2
+
+[node name="HitboxCheck" type="CheckBox" parent="Control/DebugContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "debug_hitboxes"
+
+[node name="Back" type="Button" parent="Control/DebugContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxFlat_btn_n")
+theme_override_styles/hover = SubResource("StyleBoxFlat_btn_h")
+text = "options_back"
+
 [connection signal="button_up" from="Control/VBoxContainer/Resume" to="." method="_on_resume_button_up"]
 [connection signal="button_up" from="Control/VBoxContainer/Options" to="." method="_on_options_button_up"]
+[connection signal="button_up" from="Control/VBoxContainer/Debug" to="." method="_on_debug_button_up"]
 [connection signal="button_up" from="Control/VBoxContainer/MainMenu" to="." method="_on_menu_button_up"]
 [connection signal="button_up" from="Control/VBoxContainer/Quit" to="." method="_on_quit_button_up"]
 [connection signal="toggled" from="Control/OptionsContainer/FullscreenCheck" to="." method="_on_fullscreen_toggled"]
 [connection signal="item_selected" from="Control/OptionsContainer/LanguageRow/LanguageSelect" to="." method="_on_language_selected"]
 [connection signal="button_up" from="Control/OptionsContainer/Back" to="." method="_on_options_back_pressed"]
+[connection signal="toggled" from="Control/DebugContainer/HitboxCheck" to="." method="_on_hitbox_check_toggled"]
+[connection signal="button_up" from="Control/DebugContainer/Back" to="." method="_on_debug_back_pressed"]

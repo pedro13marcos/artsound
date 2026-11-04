@@ -19,10 +19,14 @@ const COLOR_ENEMY_NEUTRAL   = Color(1.0, 0.85, 0.2, 0.9)
 const COLOR_OUT_OF_RANGE    = Color(0.8, 0.5, 0.15, 0.85)
 
 @onready var heart: Sprite2D         = $CenterContainer/Control/Heart
+@onready var hearts_container: HBoxContainer = $CenterContainer/Control/HeartsContainer
 @onready var track_drawer: Control   = $CenterContainer/Control/TrackDrawer
 @onready var target_icon: Sprite2D   = $CenterContainer/Control/TargetIcon
 @onready var target_label: Label     = $CenterContainer/Control/TargetLabel
 @onready var range_label: Label      = $CenterContainer/Control/RangeLabel
+
+var heart_full_tex: Texture2D = preload("res://image/heart_icon.png")
+var heart_empty_tex: Texture2D = preload("res://image/heart_icon_empty.png")
 
 var soundtrack: AudioStreamPlayer
 var current_bpm: float = 120.0
@@ -57,6 +61,10 @@ func _ready() -> void:
 	# Position TargetIcon at the right end of the track
 	target_icon.position = Vector2(track_width / 2.0 + 32.0, 0)
 	target_icon.visible = false
+
+	# Setup life points display (hearts)
+	Global.player_health_changed.connect(_on_health_changed)
+	_update_hearts_display(Global.player_current_health, Global.player_max_health)
 
 func _process(_delta: float) -> void:
 	if soundtrack == null or not soundtrack.playing:
@@ -125,6 +133,61 @@ func pulse_heart(seconds_per_beat: float) -> void:
 	heart.scale = Vector2(0.48, 0.48)
 	tween.tween_property(heart, "scale", Vector2(0.40, 0.40), seconds_per_beat * 0.4)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	# Subtle rhythmic breathing pulse on active hearts
+	if hearts_container != null:
+		var active_limit = min(Global.player_current_health, hearts_container.get_child_count())
+		for i in range(active_limit):
+			var h_node = hearts_container.get_child(i)
+			if h_node is Control:
+				h_node.pivot_offset = Vector2(12, 12)
+				var tw_h = create_tween()
+				h_node.scale = Vector2(1.12, 1.12)
+				tw_h.tween_property(h_node, "scale", Vector2.ONE, seconds_per_beat * 0.4)\
+					.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+
+func _on_health_changed(current_hp: int, max_hp: int) -> void:
+	_update_hearts_display(current_hp, max_hp)
+	if hearts_container != null:
+		for i in range(hearts_container.get_child_count()):
+			var h_node = hearts_container.get_child(i)
+			if h_node is Control:
+				h_node.pivot_offset = Vector2(12, 12)
+				var tw = create_tween()
+				h_node.scale = Vector2(1.35, 1.35)
+				tw.tween_property(h_node, "scale", Vector2.ONE, 0.25)\
+					.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+
+func _update_hearts_display(current_hp: int, max_hp: int) -> void:
+	if hearts_container == null:
+		return
+	
+	var child_count = hearts_container.get_child_count()
+	while child_count < max_hp:
+		var rect = TextureRect.new()
+		rect.custom_minimum_size = Vector2(24, 24)
+		rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		rect.texture = heart_full_tex
+		rect.pivot_offset = Vector2(12, 12)
+		hearts_container.add_child(rect)
+		child_count += 1
+		
+	while child_count > max_hp:
+		var last_c = hearts_container.get_child(child_count - 1)
+		hearts_container.remove_child(last_c)
+		last_c.queue_free()
+		child_count -= 1
+		
+	for i in range(max_hp):
+		var h_rect = hearts_container.get_child(i) as TextureRect
+		if h_rect != null:
+			if i < current_hp:
+				h_rect.texture = heart_full_tex
+				h_rect.modulate = Color(1.0, 1.0, 1.0, 1.0)
+			else:
+				h_rect.texture = heart_empty_tex
+				h_rect.modulate = Color(1.0, 1.0, 1.0, 0.75)
 
 func lock_on_target(target: Node) -> void:
 	if locked_target == target:

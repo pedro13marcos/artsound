@@ -13,7 +13,7 @@ size = Vector2(64, 130)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_hitbox"]
 resource_local_to_scene = true
-size = Vector2(56, 124)
+size = Vector2(96, 40)
 
 [node name="BladeMaster" type="StaticBody2D"]
 script = ExtResource("1_enemy")
@@ -45,7 +45,7 @@ shape = SubResource("RectangleShape2D_hurtbox")
 debug_color = Color(0.2, 0.9, 0.4, 0.35)
 
 [node name="AttackHitboxLeft" type="Area2D" parent="."]
-position = Vector2(-46, -62)
+position = Vector2(-68, -55)
 monitoring = false
 monitorable = false
 
@@ -55,7 +55,7 @@ disabled = true
 debug_color = Color(0.95, 0.2, 0.25, 0.45)
 
 [node name="AttackHitboxRight" type="Area2D" parent="."]
-position = Vector2(46, -62)
+position = Vector2(68, -55)
 monitoring = false
 monitorable = false
 

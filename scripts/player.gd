@@ -41,7 +41,16 @@ enum MoveMode { IDLE, HOPPING, SMOOTH_WALKING, LOCKED_OUT }
 var current_move_mode: MoveMode = MoveMode.IDLE
 var active_walk_dir: float = 0.0
 
+# Damage & Invulnerability
+var is_invulnerable: bool = false
+@export var invulnerability_duration: float = 1.2
+
+# Parry & Musical Dance State
+var is_parrying: bool = false
+@export var parry_duration: float = 0.35
+
 func _ready() -> void:
+	add_to_group("player")
 	_create_los_raycast()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -207,6 +216,13 @@ func _physics_process(delta: float) -> void:
 		return
 
 	# ----------------------------------------------------
+	# 0. PARRY DANCE MECHANIC (Key J / Left Click / Interact F when not leaping)
+	# ----------------------------------------------------
+	if Input.is_action_just_pressed("parry") or (Input.is_action_just_pressed("interact") and not (current_target is RhythmPlatform)):
+		parry()
+		return
+
+	# ----------------------------------------------------
 	# 1. RHYTHM PLATFORM LEAP (Spacebar / Interact key)
 	# ----------------------------------------------------
 	if Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("interact"):
@@ -357,4 +373,195 @@ func _on_interaction_area_body_exited(body: Node2D) -> void:
 		# Optional: keep lock on or release when walking away
 		if current_target == get_node_or_null("../Interaction point"):
 			clear_lock_target()
+
+## Takes damage from an enemy attack or hazard
+func take_damage(amount: int = 1, source: Node = null) -> void:
+	# Parry Deflection Check!
+	if is_parrying:
+		_on_parry_success(source)
+		return
+	
+	if is_invulnerable or Global.player_current_health <= 0:
+		return
+	
+	var damaged = Global.damage_player(amount)
+	if not damaged:
+		return
+	
+	# Knockback / flinch impulse away from attacker
+	if source != null and source is Node2D:
+		var knockback_dir = sign(global_position.x - source.global_position.x)
+		if knockback_dir == 0.0:
+			knockback_dir = -1.0 if ($Sprite2D and $Sprite2D.flip_h) else 1.0
+		velocity.x = knockback_dir * 280.0
+		velocity.y = -220.0
+	
+	_start_invulnerability()
+	
+	if Global.player_current_health <= 0:
+		_on_player_death()
+
+## Executes a musical dance-move parry
+func parry() -> void:
+	if is_parrying or is_rhythm_hopping or Global.player_current_health <= 0:
+		return
+	
+	is_parrying = true
+	
+	# Evaluate rhythm timing
+	var current_bpm = get_parent().bpm if "bpm" in get_parent() else 120.0
+	var rating = "OK"
+	if soundTrack and soundTrack.playing:
+		rating = Rhythm.rythymState(soundTrack, current_bpm)
+	var is_on_beat = (rating != "MISS" and rating != "error")
+	
+	# Execute Dance Flourish (Pirouette spin / hop arc)
+	_play_dance_parry_flourish(is_on_beat)
+
+func _play_dance_parry_flourish(is_on_beat: bool) -> void:
+	if $Sprite2D:
+		var sprite = $Sprite2D
+		var orig_rot = sprite.rotation
+		var orig_y = sprite.position.y
+		
+		# Dance spin & hop
+		var tw = create_tween()
+		var spin_dir = -1.0 if sprite.flip_h else 1.0
+		var hop_amt = 14.0
+		
+		# Rhythmic dance jump arc + pirouette twist
+		tw.tween_property(sprite, "position:y", orig_y - hop_amt, parry_duration * 0.45)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.parallel().tween_property(sprite, "rotation", spin_dir * (TAU if is_on_beat else (PI * 0.5)), parry_duration * 0.45)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		
+		# Golden/Cyan musical dance shimmer
+		var shimmer_color = Color(1.2, 1.1, 0.4, 1.0) if is_on_beat else Color(0.6, 0.9, 1.2, 1.0)
+		sprite.modulate = shimmer_color
+		
+		# Settle back to ground pose
+		tw.tween_property(sprite, "position:y", orig_y, parry_duration * 0.55)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.parallel().tween_property(sprite, "rotation", 0.0, parry_duration * 0.55)\
+			.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+		tw.parallel().tween_property(sprite, "modulate", Color.WHITE, parry_duration * 0.55)
+		
+		# Spawn musical soundwave ring
+		_spawn_dance_notes(is_on_beat)
+		
+		tw.finished.connect(func():
+			if sprite:
+				sprite.position.y = orig_y
+				sprite.rotation = 0.0
+				sprite.modulate = Color.WHITE
+			is_parrying = false
+		)
+	else:
+		var timer = get_tree().create_timer(parry_duration)
+		timer.timeout.connect(func():
+			is_parrying = false
+		)
+
+func _on_parry_success(source: Node) -> void:
+	# Brief i-frames so overlapping attack collision doesn't harm right after
+	is_invulnerable = true
+	var timer = get_tree().create_timer(0.35)
+	timer.timeout.connect(func(): is_invulnerable = false)
+	
+	# Spawn clash visual & chime ring
+	_spawn_parry_clash_effect(global_position + Vector2(0, -50))
+	
+	# Stagger attacker if RhythmEnemy
+	if source != null and source.has_method("on_parried_by_player"):
+		source.on_parried_by_player(self)
+
+func _spawn_dance_notes(is_on_beat: bool) -> void:
+	var fx = Node2D.new()
+	fx.global_position = global_position + Vector2(0, -45)
+	get_parent().add_child(fx)
+	
+	var symbols = ["♩", "♪", "♫", "♬", "✨"]
+	var col = Color(1.0, 0.85, 0.25, 1.0) if is_on_beat else Color(0.4, 0.8, 1.0, 0.9)
+	var num_notes = 4 if is_on_beat else 2
+	
+	for i in range(num_notes):
+		var lbl = Label.new()
+		lbl.text = symbols[randi() % symbols.size()]
+		lbl.add_theme_font_size_override("font_size", 18 if is_on_beat else 14)
+		lbl.add_theme_color_override("font_color", col)
+		var angle = (TAU / num_notes) * i + randf_range(-0.2, 0.2)
+		var offset = Vector2(cos(angle), sin(angle)) * randf_range(15, 30)
+		lbl.position = offset
+		fx.add_child(lbl)
+		
+		var tw = fx.create_tween().set_parallel(true)
+		tw.tween_property(lbl, "position", offset + Vector2(0, -35), 0.45)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(lbl, "modulate:a", 0.0, 0.45)
+	
+	get_tree().create_timer(0.5).timeout.connect(func():
+		if is_instance_valid(fx):
+			fx.queue_free()
+	)
+
+func _spawn_parry_clash_effect(pos: Vector2) -> void:
+	var fx = Node2D.new()
+	fx.global_position = pos
+	get_parent().add_child(fx)
+	
+	var ring = Control.new()
+	var radius = 10.0
+	var ring_col = Color(1.0, 0.95, 0.4, 1.0)
+	ring.draw.connect(func():
+		ring.draw_circle(Vector2.ZERO, radius, Color(1.0, 0.95, 0.5, 0.35))
+		ring.draw_arc(Vector2.ZERO, radius, 0, TAU, 32, ring_col, 3.0)
+	)
+	fx.add_child(ring)
+	
+	var lbl = Label.new()
+	lbl.text = "PARRY!"
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.95, 0.3, 1.0))
+	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.8))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.position = Vector2(-36, -30)
+	fx.add_child(lbl)
+	
+	var tw = fx.create_tween().set_parallel(true)
+	tw.tween_method(func(r: float):
+		radius = r
+		ring.queue_redraw()
+	, 10.0, 55.0, 0.35).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(lbl, "position:y", -55.0, 0.4).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.4)
+	tw.tween_property(fx, "modulate:a", 0.0, 0.4)
+	
+	get_tree().create_timer(0.45).timeout.connect(func():
+		if is_instance_valid(fx):
+			fx.queue_free()
+	)
+
+func _start_invulnerability() -> void:
+	is_invulnerable = true
+	if $Sprite2D:
+		var flash_tween = create_tween()
+		var step_time = invulnerability_duration / 12.0
+		for i in range(6):
+			flash_tween.tween_property($Sprite2D, "modulate", Color(1.0, 0.4, 0.4, 0.35), step_time)
+			flash_tween.tween_property($Sprite2D, "modulate", Color.WHITE, step_time)
+		flash_tween.finished.connect(func():
+			if $Sprite2D:
+				$Sprite2D.modulate = Color.WHITE
+			is_invulnerable = false
+		)
+	else:
+		var timer = get_tree().create_timer(invulnerability_duration)
+		timer.timeout.connect(func():
+			is_invulnerable = false
+		)
+
+func _on_player_death() -> void:
+	velocity = Vector2.ZERO
+
 		

@@ -1,0 +1,23 @@
+[gd_scene format=3 uid="uid://bt6i1ffnk7r2w"]
+
+[ext_resource type="Script" path="res://scripts/heart_expansion.gd" id="1_hexp"]
+[ext_resource type="Texture2D" path="res://image/light_glow.png" id="2_glow"]
+[ext_resource type="Texture2D" path="res://image/heart_icon_green.png" id="3_heart_green"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_item"]
+radius = 24.0
+
+[node name="HeartExpansion" type="Area2D"]
+script = ExtResource("1_hexp")
+
+[node name="Glow" type="Sprite2D" parent="."]
+modulate = Color(0.2, 1, 0.45, 0.65)
+scale = Vector2(1.3, 1.3)
+texture = ExtResource("2_glow")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.55, 0.55)
+texture = ExtResource("3_heart_green")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("CircleShape2D_item")
