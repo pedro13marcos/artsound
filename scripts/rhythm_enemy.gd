@@ -3,6 +3,7 @@ class_name RhythmEnemy
 
 signal player_hit(player: Node2D, side: String, beat_offset: float)
 signal damage_taken(amount: int, remaining_hp: int)
+signal enemy_defeated()
 
 enum EnemyMode { IDLE, COMBAT }
 enum CombatSubState { READY, ATTACKING, SHARPENING }
@@ -13,8 +14,8 @@ enum CombatSubState { READY, ATTACKING, SHARPENING }
 @export var max_interaction_range: float = 350.0
 ## Horizontal raycast distance (left and right) to detect the player on the same horizontal line.
 @export var line_detection_range: float = 650.0
-## Enemy health prepared for when player attacks are wired in.
-@export var max_health: int = 3
+## Enemy health (2 attacks / perfect parries kill the enemy)
+@export var max_health: int = 2
 
 # Light / outline glow settings
 @export var attack_light_color: Color = Color(1.0, 0.2, 0.25, 1.0) # Red on attack
@@ -27,8 +28,9 @@ var current_mode: EnemyMode = EnemyMode.IDLE
 var current_sub_state: CombatSubState = CombatSubState.READY
 ## -1 = player is on the left side, 1 = player is on the right side
 var facing_dir: int = -1
-var current_health: int = 3
+var current_health: int = 2
 var is_vulnerable: bool = false
+var is_dead: bool = false
 
 # Sprites for each state
 var tex_idle: Texture2D = preload("res://image/blademaster.png")
@@ -56,6 +58,8 @@ var _pose_reset_timer: float = 0.0
 var _hitbox_active_timer: float = 0.0
 var is_staggered: bool = false
 var _stagger_timer: float = 0.0
+var health_bar_container: Node2D = null
+var health_bar_fill: ColorRect = null
 
 func _ready() -> void:
 	current_health = max_health
@@ -65,6 +69,7 @@ func _ready() -> void:
 	_setup_combat_areas()
 	_create_reticle()
 	_create_outline_shader()
+	_setup_health_display()
 	_apply_idle_pose()
 
 func _find_sprite() -> void:
@@ -182,6 +187,8 @@ func _create_reticle() -> void:
 	reticle.add_child(reticle_drawer)
 
 func _physics_process(delta: float) -> void:
+	if is_dead:
+		return
 	if is_staggered:
 		_stagger_timer -= delta
 		if _stagger_timer <= 0.0:
@@ -223,6 +230,9 @@ func _update_line_of_sight_state() -> void:
 		facing_dir = detected_dir
 		if current_mode != EnemyMode.COMBAT:
 			current_mode = EnemyMode.COMBAT
+			# Notice player -> auto focus on this enemy!
+			if detected_player.has_method("set_lock_target"):
+				detected_player.set_lock_target(self)
 		# Keep idle/ready pose oriented toward the player's side
 		if current_sub_state == CombatSubState.READY and sprite_node:
 			sprite_node.flip_h = (facing_dir > 0)
@@ -238,6 +248,8 @@ func _is_player_node(node: Object) -> bool:
 	return node.name == "Player" or node.is_in_group("player")
 
 func _process(_delta: float) -> void:
+	if is_dead:
+		return
 	if soundtrack_ref == null or not soundtrack_ref.playing:
 		soundtrack_ref = get_tree().current_scene.find_child("soundTrack", true, false)
 		if soundtrack_ref == null or not soundtrack_ref.playing:
@@ -368,34 +380,148 @@ func _trigger_player_hit(player_body: Node2D, side: String) -> void:
 		player_body.take_damage(1, self)
 
 ## Called when the player successfully parries the enemy's attack
-func on_parried_by_player(player: Node2D) -> void:
+func on_parried_by_player(player: Node2D, is_perfect: bool = false) -> void:
+	if is_dead:
+		return
 	is_staggered = true
-	_stagger_timer = 0.85
+	_stagger_timer = 0.95
 	_disable_attack_hitboxes()
 	is_vulnerable = true # Briefly open to counter-attacks
 	
+	if is_perfect:
+		# Perfect parry deals 1 damage! 2 perfect parries kill the enemy.
+		take_damage(1, true)
+	else:
+		_play_stagger_fx(false)
+
+## Damage receiver: returns true if damage was dealt
+func take_damage(amount: int = 1, is_perfect_parry: bool = false) -> bool:
+	if is_dead:
+		return false
+	if not is_vulnerable and not is_perfect_parry:
+		# Blocked! Enemy is in neutral guard or attacking without perfect parry
+		return false
+	
+	current_health = max(0, current_health - amount)
+	damage_taken.emit(amount, current_health)
+	_update_health_display()
+	_play_stagger_fx(true)
+	
+	if current_health <= 0:
+		_die()
+		
+	return true
+
+func _play_stagger_fx(took_damage: bool) -> void:
 	if sprite_node:
 		var tw = create_tween()
 		var recoil_dir = 1.0 if facing_dir < 0 else -1.0
-		tw.tween_property(sprite_node, "position:x", recoil_dir * 20.0, 0.1)\
+		var recoil_dist = 26.0 if took_damage else 16.0
+		tw.tween_property(sprite_node, "position:x", recoil_dir * recoil_dist, 0.1)\
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 		tw.tween_property(sprite_node, "position:x", 0.0, 0.25)\
 			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
 		
-		# Cyan/golden stagger flash
-		tw.parallel().tween_property(sprite_node, "modulate", Color(0.4, 0.9, 1.4, 1.0), 0.12)
+		# Red flash on damage, cyan/gold on normal parry stagger
+		var flash_col = Color(2.0, 0.35, 0.35, 1.0) if took_damage else Color(0.4, 0.9, 1.4, 1.0)
+		tw.parallel().tween_property(sprite_node, "modulate", flash_col, 0.12)
 		tw.tween_property(sprite_node, "modulate", Color.WHITE, 0.3)
+	
+	if took_damage:
+		_spawn_damage_text("-1 HP")
 
-## Prepared defense / damage receiver for when the player's attack is implemented.
-## Returns true if the hit landed during the green sharpening/vulnerable window,
-## or false if blocked during red attack / neutral guard states.
-func take_damage(amount: int = 1) -> bool:
-	if not is_vulnerable:
-		# Blocked! Enemy is in Attack or Guard state
-		return false
-	current_health = max(0, current_health - amount)
-	damage_taken.emit(amount, current_health)
-	return true
+func _die() -> void:
+	if is_dead:
+		return
+	is_dead = true
+	current_mode = EnemyMode.IDLE
+	_disable_attack_hitboxes()
+	
+	# Clear reticle & player lock
+	var player = get_tree().current_scene.find_child("Player", true, false)
+	if player and "current_target" in player and player.current_target == self:
+		player.clear_lock_target()
+	
+	set_targeted(false)
+	remove_from_group("lockable_targets")
+	
+	if hurtbox_area:
+		hurtbox_area.set_deferred("monitoring", false)
+		hurtbox_area.set_deferred("monitorable", false)
+	var col = get_node_or_null("CollisionShape2D")
+	if col:
+		col.set_deferred("disabled", true)
+	
+	if health_bar_container:
+		health_bar_container.visible = false
+	
+	enemy_defeated.emit()
+	
+	# Defeat animation: slow collapse & dissolve with gentle fall
+	if sprite_node:
+		var tw = create_tween().set_parallel(true)
+		tw.tween_property(sprite_node, "modulate:a", 0.0, 0.85)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tw.tween_property(sprite_node, "position:y", sprite_node.position.y + 20.0, 0.85)\
+			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		tw.finished.connect(func():
+			queue_free()
+		)
+	else:
+		queue_free()
+
+func _spawn_damage_text(txt: String) -> void:
+	var lbl = Label.new()
+	lbl.text = txt
+	lbl.add_theme_font_size_override("font_size", 20)
+	lbl.add_theme_color_override("font_color", Color(1.0, 0.25, 0.3, 1.0))
+	lbl.add_theme_color_override("font_shadow_color", Color(0.0, 0.0, 0.0, 0.9))
+	lbl.add_theme_constant_override("shadow_offset_x", 1)
+	lbl.add_theme_constant_override("shadow_offset_y", 1)
+	lbl.position = Vector2(-28, -165)
+	add_child(lbl)
+	
+	var tw = create_tween().set_parallel(true)
+	tw.tween_property(lbl, "position:y", -195.0, 0.55).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tw.tween_property(lbl, "modulate:a", 0.0, 0.55)
+	tw.finished.connect(func():
+		if is_instance_valid(lbl):
+			lbl.queue_free()
+	)
+
+func _setup_health_display() -> void:
+	health_bar_container = Node2D.new()
+	health_bar_container.name = "HealthDisplay"
+	health_bar_container.position = Vector2(0, -145)
+	add_child(health_bar_container)
+	
+	var bg = ColorRect.new()
+	bg.name = "HealthBG"
+	bg.color = Color(0.1, 0.1, 0.15, 0.85)
+	bg.size = Vector2(50, 6)
+	bg.position = Vector2(-25, 0)
+	health_bar_container.add_child(bg)
+	
+	health_bar_fill = ColorRect.new()
+	health_bar_fill.name = "HealthFill"
+	health_bar_fill.color = Color(0.9, 0.2, 0.25, 0.95)
+	health_bar_fill.size = Vector2(50, 6)
+	health_bar_fill.position = Vector2(-25, 0)
+	health_bar_container.add_child(health_bar_fill)
+
+func _update_health_display() -> void:
+	if health_bar_fill == null:
+		return
+	var pct = clamp(float(current_health) / float(max_health), 0.0, 1.0)
+	var tw = create_tween()
+	tw.tween_property(health_bar_fill, "size:x", 50.0 * pct, 0.2)\
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	
+	if health_bar_container:
+		var tw_shake = create_tween()
+		tw_shake.tween_property(health_bar_container, "position:x", 4.0, 0.04)
+		tw_shake.tween_property(health_bar_container, "position:x", -4.0, 0.04)
+		tw_shake.tween_property(health_bar_container, "position:x", 0.0, 0.04)
 
 func _pulse_light(action_type: String, seconds_per_beat: float) -> void:
 	var is_green = (action_type == "sharpen" or action_type == "vulnerable")

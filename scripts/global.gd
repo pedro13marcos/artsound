@@ -144,7 +144,7 @@ func _create_watermark() -> void:
 	
 	var label = Label.new()
 	label.name = "WatermarkLabel"
-	label.text = "pre-alpha version 0.20"
+	label.text = "pre-alpha version 0.21"
 	
 	# Add child to the CanvasLayer first so anchors calculate against the viewport
 	canvas.add_child(label)
