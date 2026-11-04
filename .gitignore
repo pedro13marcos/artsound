@@ -1,3 +1,18 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# Build & export output
+Exports/
+builds/
+build/
+bin/
+*.pck
+*.wasm
+*.zip
+*.exe
+
+# OS & Editor files
+.DS_Store
+Thumbs.db
+desktop.ini
