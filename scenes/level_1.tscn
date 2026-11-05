@@ -1,14 +1,12 @@
-[gd_scene format=3 uid="uid://cqk1hemomhb83"]
+[gd_scene format=4 uid="uid://cqk1hemomhb83"]
 
 [ext_resource type="Script" uid="uid://bd3a5017sni55" path="res://scripts/level.gd" id="1_level"]
 [ext_resource type="PackedScene" uid="uid://j0bjvr6bjgrs" path="res://scenes/player.tscn" id="2_player_scn"]
 [ext_resource type="AudioStream" uid="uid://cw5ol7lrxh5bt" path="res://Sounds/Chill beat.mp3" id="3_music"]
 [ext_resource type="PackedScene" uid="uid://c5v8g26l47w8r" path="res://scenes/rhythm_hud.tscn" id="4_hud"]
 [ext_resource type="PackedScene" uid="uid://b7v1a2k3m4n5p" path="res://scenes/pause_menu.tscn" id="5_pause"]
-[ext_resource type="PackedScene" uid="uid://c5platscene01" path="res://scenes/platform.tscn" id="6_plat_scn"]
 [ext_resource type="PackedScene" uid="uid://brgmvks1ali2w" path="res://scenes/enemy_blademaster.tscn" id="7_enemy_scn"]
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="8_cam"]
-[ext_resource type="Script" uid="uid://xquvibblqfvh" path="res://scripts/wall_block.gd" id="9_wall"]
 [ext_resource type="PackedScene" uid="uid://c5heartcnt01" path="res://scenes/heart_container.tscn" id="10_heart_cnt"]
 [ext_resource type="PackedScene" uid="uid://bt6i1ffnk7r2w" path="res://scenes/heart_expansion.tscn" id="11_hexp"]
 [ext_resource type="Script" uid="uid://b5l0ix7b7ijt2" path="res://scripts/out_of_bounds.gd" id="12_oob"]
@@ -43,108 +41,12 @@ script = ExtResource("1_level")
 stream = ExtResource("3_music")
 autoplay = true
 
-[node name="Walls" type="Node2D" parent="." unique_id=1516934794]
-
-[node name="CorridorFloor" type="StaticBody2D" parent="Walls" unique_id=1471769493]
-position = Vector2(480, 2715)
-script = ExtResource("9_wall")
-size = Vector2(684, 36)
-
-[node name="CorridorLeftWall" type="StaticBody2D" parent="Walls" unique_id=973690374]
-position = Vector2(480, 2124)
-script = ExtResource("9_wall")
-size = Vector2(36, 627)
-
-[node name="CorridorRightWall" type="StaticBody2D" parent="Walls" unique_id=1250834181]
-position = Vector2(1128, 1920)
-script = ExtResource("9_wall")
-size = Vector2(36, 831)
-
-[node name="OuterLeftWall" type="StaticBody2D" parent="Walls" unique_id=1044089100]
-position = Vector2(108, 645)
-script = ExtResource("9_wall")
-size = Vector2(36, 1479)
-
-[node name="ShaftTab" type="StaticBody2D" parent="Walls" unique_id=416851745]
-position = Vector2(75, 620)
-script = ExtResource("9_wall")
-size = Vector2(140, 30)
-
-[node name="ShaftRightWall" type="StaticBody2D" parent="Walls" unique_id=1499099860]
-position = Vector2(354, 720)
-script = ExtResource("9_wall")
-size = Vector2(36, 345)
-
-[node name="Ceiling" type="StaticBody2D" parent="Walls" unique_id=713764999]
-position = Vector2(360, 1050)
-script = ExtResource("9_wall")
-size = Vector2(1290, 36)
-
-[node name="RightWall" type="StaticBody2D" parent="Walls" unique_id=1254545468]
-position = Vector2(1632, 1050)
-script = ExtResource("9_wall")
-size = Vector2(36, 840)
-
 [node name="Platforms" type="Node2D" parent="." unique_id=1050641657]
 
 [node name="TileMapPlatforms" type="TileMapLayer" parent="Platforms" unique_id=994894522]
+tile_map_data = PackedByteArray("AAABACEAAAAAAAAAAAABAAgAAAAAAAAAAAAFAAgAAAAAAAAAAAAFABAAAAAAAAAAAAAcABAAAAAAAAAAAAAcAB4AAAAAAAAAAAASAB4AAAAAAAAAAAAHACEAAAABAAAAAAAHACsAAAAAAAAAAAASACsAAAAAAAAAAAAIACsAAAABAAAAAAAJACsAAAABAAAAAAAKACsAAAABAAAAAAALACsAAAABAAAAAAAMACsAAAABAAAAAAANACsAAAABAAAAAAAOACsAAAABAAAAAAAPACsAAAABAAAAAAAQACsAAAABAAAAAAARACsAAAABAAAAAAATAB4AAAABAAAAAAAUAB4AAAABAAAAAAAVAB4AAAABAAAAAAAWAB4AAAABAAAAAAAXAB4AAAABAAAAAAAYAB4AAAABAAAAAAAZAB4AAAABAAAAAAAaAB4AAAABAAAAAAAbAB4AAAABAAAAAAACACEAAAABAAAAAAADACEAAAABAAAAAAAEACEAAAABAAAAAAAFACEAAAABAAAAAAAGACEAAAABAAAAAAACAAgAAAABAAIAAAADAAgAAAABAAIAAAAEAAgAAAABAAIAAAAGABAAAAABAAIAAAAHABAAAAABAAIAAAAIABAAAAABAAIAAAAJABAAAAABAAIAAAAKABAAAAABAAIAAAALABAAAAABAAIAAAAMABAAAAABAAIAAAANABAAAAABAAIAAAAOABAAAAABAAIAAAAPABAAAAABAAIAAAAQABAAAAABAAIAAAARABAAAAABAAIAAAASABAAAAABAAIAAAATABAAAAABAAIAAAAUABAAAAABAAIAAAAVABAAAAABAAIAAAAWABAAAAABAAIAAAAXABAAAAABAAIAAAAYABAAAAABAAIAAAAZABAAAAABAAIAAAAaABAAAAABAAIAAAAbABAAAAABAAIAAAAcABEAAAACAAAAAAAcABIAAAACAAAAAAAcABMAAAACAAAAAAAcABQAAAACAAAAAAAcABUAAAACAAAAAAAcABYAAAACAAAAAAAcABcAAAACAAAAAAAcABgAAAACAAAAAAAcABkAAAACAAAAAAAcABoAAAACAAAAAAAcABsAAAAAAAAAAAAcABwAAAACAAAAAAAcAB0AAAACAAAAAAAFAAkAAAACAAAAAAAFAAoAAAACAAAAAAAFAAsAAAACAAAAAAAFAAwAAAACAAAAAAAFAA0AAAACAAAAAAAFAA4AAAACAAAAAAAFAA8AAAACAAAAAAASAB8AAAACAAAAAAASACAAAAACAAAAAAASACEAAAACAAAAAAASACIAAAACAAAAAAASACMAAAACAAAAAAASACQAAAACAAAAAAASACUAAAACAAAAAAASACYAAAACAAAAAAASACcAAAAAAAAAAAASACgAAAACAAAAAAASACkAAAACAAAAAAASACoAAAACAAAAAAAHACIAAAAAAAAAAAAHACMAAAADAAAAAAAHACQAAAADAAAAAAAHACUAAAADAAAAAAAHACYAAAADAAAAAAAHACcAAAADAAAAAAAHACgAAAADAAAAAAAHACkAAAADAAAAAAAHACoAAAADAAAAAAABAAkAAAADAAAAAAABAAoAAAADAAAAAAABAAsAAAADAAAAAAABAAwAAAADAAAAAAABAA0AAAAAAAAAAAABAA4AAAADAAAAAAABAA8AAAADAAAAAAABABAAAAADAAAAAAABABEAAAADAAAAAAABABIAAAADAAAAAAABABMAAAADAAAAAAABABQAAAAAAAAAAAABABUAAAADAAAAAAABABYAAAADAAAAAAABABcAAAADAAAAAAABABgAAAAAAAAAAAABABkAAAADAAAAAAABABoAAAADAAAAAAABABsAAAADAAAAAAABABwAAAADAAAAAAABAB0AAAADAAAAAAABAB4AAAADAAAAAAABAB8AAAADAAAAAAABACAAAAADAAAAAAAIACEAAAABAAAAAAAJACEAAAABAAAAAAAKACEAAAABAAAAAAALACEAAAACAAEAAAAIACIAAAABAAIAAAAJACIAAAABAAIAAAAKACIAAAAAAAAAAAARACcAAAABAAEAAAAQACcAAAABAAEAAAAPACcAAAABAAEAAAAOACcAAAAAAAEAAAARAB4AAAABAAEAAAAQAB4AAAABAAEAAAAPAB4AAAABAAEAAAAOAB4AAAABAAEAAAANAB4AAAABAAEAAAAMAB4AAAAAAAEAAAACABgAAAABAAEAAAADABgAAAABAAEAAAAEABgAAAABAAEAAAAFABgAAAABAAEAAAAGABgAAAABAAEAAAAHABgAAAABAAEAAAAIABgAAAABAAEAAAAJABgAAAABAAEAAAAKABgAAAABAAEAAAALABgAAAABAAEAAAAMABgAAAABAAEAAAANABgAAAABAAEAAAAOABgAAAABAAEAAAAPABgAAAABAAEAAAAQABgAAAABAAEAAAARABgAAAABAAEAAAASABgAAAABAAEAAAATABgAAAABAAEAAAAUABgAAAABAAEAAAAVABgAAAACAAEAAAAbABsAAAABAAEAAAAaABsAAAABAAEAAAAZABsAAAABAAEAAAAYABsAAAAAAAEAAAACABQAAAACAAEAAAAEABAAAAAAAAEAAAADAA0AAAACAAEAAAACAA0AAAABAAEAAAA=")
 tile_set = ExtResource("13_wts")
 script = ExtResource("14_rtm")
-
-[node name="EnemyFloor" parent="Platforms" unique_id=79466418 instance=ExtResource("6_plat_scn")]
-position = Vector2(1020, 1890)
-entity_name = "Enemy Floor"
-size = Vector2(1230, 36)
-max_interaction_range = 1300.0
-reticle_edge_inset = 30.0
-
-[node name="UpperLedge" parent="Platforms" unique_id=1204585773 instance=ExtResource("6_plat_scn")]
-position = Vector2(900, 1473)
-entity_name = "Upper Ledge"
-size = Vector2(840, 36)
-max_interaction_range = 1300.0
-
-[node name="StepFloor" parent="Platforms" unique_id=940186320 instance=ExtResource("6_plat_scn")]
-position = Vector2(330, 2106)
-entity_name = "Step"
-size = Vector2(201.52, 36)
-max_interaction_range = 900.0
-
-[node name="LedgeC1" parent="Platforms" unique_id=562785698 instance=ExtResource("6_plat_scn")]
-position = Vector2(675, 2430)
-size = Vector2(180, 28)
-
-[node name="LedgeC2" parent="Platforms" unique_id=1874799519 instance=ExtResource("6_plat_scn")]
-position = Vector2(891, 2196)
-size = Vector2(180, 28)
-
-[node name="LedgeC3" parent="Platforms" unique_id=1475686610 instance=ExtResource("6_plat_scn")]
-position = Vector2(675, 2010)
-size = Vector2(180, 28)
-
-[node name="ShaftS1" parent="Platforms" unique_id=1788001851 instance=ExtResource("6_plat_scn")]
-position = Vector2(300, 1330)
-size = Vector2(180, 28)
-
-[node name="ShaftS2" parent="Platforms" unique_id=154368225 instance=ExtResource("6_plat_scn")]
-position = Vector2(230, 1170)
-size = Vector2(180, 28)
-
-[node name="ShaftS3" parent="Platforms" unique_id=1259395302 instance=ExtResource("6_plat_scn")]
-position = Vector2(300, 1010)
-size = Vector2(180, 28)
-
-[node name="ShaftS4" parent="Platforms" unique_id=1983468750 instance=ExtResource("6_plat_scn")]
-position = Vector2(230, 850)
-size = Vector2(180, 28)
-
-[node name="RoomR1" parent="Platforms" unique_id=1174784901 instance=ExtResource("6_plat_scn")]
-position = Vector2(1646, 1311)
-size = Vector2(180, 28)
-
-[node name="RoomR2" parent="Platforms" unique_id=32575073 instance=ExtResource("6_plat_scn")]
-position = Vector2(1677, 1696)
-size = Vector2(192.355, 28)
 
 [node name="BladeMaster" parent="." unique_id=1960033870 instance=ExtResource("7_enemy_scn")]
 position = Vector2(1256, 1872)
