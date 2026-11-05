@@ -11,6 +11,28 @@
 [ext_resource type="Script" uid="uid://xquvibblqfvh" path="res://scripts/wall_block.gd" id="9_wall"]
 [ext_resource type="PackedScene" path="res://scenes/heart_container.tscn" id="10_heart_cnt"]
 [ext_resource type="PackedScene" path="res://scenes/heart_expansion.tscn" id="11_hexp"]
+[ext_resource type="Script" path="res://scripts/out_of_bounds.gd" id="12_oob"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_bottom"]
+size = Vector2(3600, 500)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_left"]
+size = Vector2(520, 3000)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_left_lower"]
+size = Vector2(400, 680)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_right_lower"]
+size = Vector2(1440, 920)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_right"]
+size = Vector2(700, 2000)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_top"]
+size = Vector2(3600, 600)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_upper_right"]
+size = Vector2(1580, 540)
 
 [node name="Level1" type="Node2D" unique_id=753066007]
 script = ExtResource("1_level")
@@ -141,3 +163,34 @@ player = NodePath("../Player")
 [node name="RhythmHUD" parent="." unique_id=470948576 instance=ExtResource("4_hud")]
 
 [node name="PauseMenu" parent="." unique_id=806036908 instance=ExtResource("5_pause")]
+
+[node name="OutOfBounds" type="Area2D" parent="."]
+script = ExtResource("12_oob")
+
+[node name="BottomVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(900, 3050)
+shape = SubResource("RectangleShape2D_oob_bottom")
+
+[node name="LeftVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(-200, 1400)
+shape = SubResource("RectangleShape2D_oob_left")
+
+[node name="LeftLowerVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(265, 2500)
+shape = SubResource("RectangleShape2D_oob_left_lower")
+
+[node name="RightLowerVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(1900, 2400)
+shape = SubResource("RectangleShape2D_oob_right_lower")
+
+[node name="RightVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(2200, 1000)
+shape = SubResource("RectangleShape2D_oob_right")
+
+[node name="TopVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(900, 200)
+shape = SubResource("RectangleShape2D_oob_top")
+
+[node name="UpperRightVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(1200, 760)
+shape = SubResource("RectangleShape2D_oob_upper_right")

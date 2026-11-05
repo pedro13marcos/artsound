@@ -65,6 +65,10 @@ func _draw() -> void:
 				fill_col = Color(0.2, 0.7, 1.0, 0.35) # Player Body (Cyan)
 				line_col = Color(0.2, 0.7, 1.0, 0.95)
 				label_text = "PLAYER"
+		elif p is OutOfBounds or "outofbounds" in p_name:
+			fill_col = Color(0.75, 0.2, 0.9, 0.15) # Out of Bounds (Purple)
+			line_col = Color(0.85, 0.3, 1.0, 0.75)
+			label_text = "OUT OF BOUNDS"
 		else:
 			continue # Only show combat relevant hitboxes/hurtboxes
 		

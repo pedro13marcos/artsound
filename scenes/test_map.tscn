@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://238j5uat3eou"]
+[gd_scene format=3 uid="uid://dd8s0a70mn6v0"]
 
 [ext_resource type="Script" uid="uid://bd3a5017sni55" path="res://scripts/level.gd" id="1_mprkn"]
 [ext_resource type="Script" uid="uid://3x83eargri7e" path="res://scripts/player.gd" id="1_wcthm"]
@@ -13,12 +13,19 @@
 [ext_resource type="Script" uid="uid://d3pqdlduashx4" path="res://scripts/camera_2d.gd" id="7_85ip6"]
 [ext_resource type="PackedScene" path="res://scenes/heart_container.tscn" id="8_hcont"]
 [ext_resource type="PackedScene" path="res://scenes/heart_expansion.tscn" id="9_hexp"]
+[ext_resource type="Script" path="res://scripts/out_of_bounds.gd" id="10_oob"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g4v7s"]
 size = Vector2(55, 124)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_ground"]
 size = Vector2(3297.25, 129)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_horiz"]
+size = Vector2(11000, 600)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_vert"]
+size = Vector2(600, 3000)
 
 [node name="TestMap" type="Node2D" unique_id=579411418]
 script = ExtResource("1_mprkn")
@@ -92,3 +99,22 @@ limit_smoothed = true
 position_smoothing_enabled = true
 script = ExtResource("7_85ip6")
 player = NodePath("../Player")
+
+[node name="OutOfBounds" type="Area2D" parent="."]
+script = ExtResource("10_oob")
+
+[node name="BottomVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(1500, 1050)
+shape = SubResource("RectangleShape2D_oob_horiz")
+
+[node name="TopVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(1500, -900)
+shape = SubResource("RectangleShape2D_oob_horiz")
+
+[node name="LeftVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(-3350, 0)
+shape = SubResource("RectangleShape2D_oob_vert")
+
+[node name="RightVoid" type="CollisionShape2D" parent="OutOfBounds"]
+position = Vector2(6400, 0)
+shape = SubResource("RectangleShape2D_oob_vert")
