@@ -22,10 +22,12 @@ expand_margin_bottom = 4.0
 
 [node name="GameOverMenu" type="CanvasLayer"]
 process_mode = 3
+visible = false
 layer = 100
 script = ExtResource("1_gover")
 
 [node name="Control" type="Control" parent="."]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

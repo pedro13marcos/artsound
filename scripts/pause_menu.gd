@@ -60,6 +60,9 @@ func toggle_pause() -> void:
 	is_paused = !is_paused
 	get_tree().paused = is_paused
 	visible = is_paused
+	var control_node = get_node_or_null("Control")
+	if control_node:
+		control_node.visible = is_paused
 	
 	if is_paused:
 		Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

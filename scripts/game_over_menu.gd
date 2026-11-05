@@ -15,6 +15,8 @@ func _on_player_died() -> void:
 
 func show_game_over() -> void:
 	visible = true
+	if control_root:
+		control_root.visible = true
 	get_tree().paused = true
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	

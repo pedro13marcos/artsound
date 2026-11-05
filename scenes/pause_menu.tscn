@@ -22,10 +22,12 @@ expand_margin_bottom = 4.0
 
 [node name="PauseMenu" type="CanvasLayer"]
 process_mode = 3
+visible = false
 layer = 10
 script = ExtResource("1_pause")
 
 [node name="Control" type="Control" parent="."]
+visible = false
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0

@@ -94,3 +94,4 @@ text = ""
 vertical_alignment = 1
 
 [node name="GameOverMenu" parent="." instance=ExtResource("5_gover")]
+visible = false
