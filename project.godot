@@ -11,7 +11,7 @@ config_version=5
 [application]
 
 config/name="Sound loud"
-config/version="0.26"
+config/version="0.27"
 run/main_scene="uid://dmavdwgq4xtbt"
 config/features=PackedStringArray("4.7", "Forward Plus")
 boot_splash/image="res://image/splash.png"
