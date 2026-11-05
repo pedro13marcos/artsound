@@ -137,6 +137,8 @@ func _resolve_supported_locale(raw_locale: String) -> String:
 		return "en"
 	return "pt_BR"
 
+const GAME_VERSION: String = "0.24"
+
 func _create_watermark() -> void:
 	# Persistent canvas layer on top of all scenes
 	var canvas = CanvasLayer.new()
@@ -146,7 +148,7 @@ func _create_watermark() -> void:
 	
 	var label = Label.new()
 	label.name = "WatermarkLabel"
-	label.text = "pre-alpha version 0.23"
+	label.text = "pre-alpha version " + GAME_VERSION
 	
 	# Add child to the CanvasLayer first so anchors calculate against the viewport
 	canvas.add_child(label)
