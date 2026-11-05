@@ -109,6 +109,7 @@ func _on_fullscreen_toggled(button_pressed: bool) -> void:
 		DisplayServer.window_set_mode(DisplayServer.WINDOW_MODE_WINDOWED)
 
 func _on_menu_button_up() -> void:
+	Global.reset_player_health()
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://scenes/menu.tscn")

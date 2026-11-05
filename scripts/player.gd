@@ -40,6 +40,8 @@ const HOP_HEIGHT: float = 24.0         # Height of normal ground hop arc
 enum MoveMode { IDLE, HOPPING, SMOOTH_WALKING, LOCKED_OUT }
 var current_move_mode: MoveMode = MoveMode.IDLE
 var active_walk_dir: float = 0.0
+const DIRECTION_CHANGE_GRACE_TIME: float = 0.20
+var direction_change_grace: float = 0.0
 
 # Damage & Invulnerability
 var is_invulnerable: bool = false
@@ -51,10 +53,27 @@ var is_parrying: bool = false
 var tex_char_idle: Texture2D = preload("res://image/character.png")
 var tex_char_parry: Texture2D = preload("res://image/character_parry_ballet.png")
 
+# Spawn position and movement tween tracking for out-of-bounds resets
+var spawn_position: Vector2 = Vector2.ZERO
+var _active_move_tweens: Array[Tween] = []
+
 func _ready() -> void:
+	spawn_position = global_position
 	add_to_group("player")
 	_create_los_raycast()
 	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+
+func reset_to_spawn() -> void:
+	for tw in _active_move_tweens:
+		if tw != null and tw.is_valid():
+			tw.kill()
+	_active_move_tweens.clear()
+	is_rhythm_hopping = false
+	current_move_mode = MoveMode.IDLE
+	direction_change_grace = 0.0
+	velocity = Vector2.ZERO
+	global_position = spawn_position
+	clear_lock_target()
 
 func _create_los_raycast() -> void:
 	los_raycast = RayCast2D.new()
@@ -211,11 +230,35 @@ func _physics_process(delta: float) -> void:
 	if is_rhythm_hopping:
 		return
 
-	# Add the gravity when falling or mid-air
+	# Track horizontal input, preserving direction changes when both left & right are held simultaneously
+	if Input.is_action_just_pressed("ui_left"):
+		active_walk_dir = -1.0
+	elif Input.is_action_just_pressed("ui_right"):
+		active_walk_dir = 1.0
+
+	var input_x = Input.get_axis("ui_left", "ui_right")
+	if input_x == 0.0 and Input.is_action_pressed("ui_left") and Input.is_action_pressed("ui_right"):
+		input_x = active_walk_dir if active_walk_dir != 0.0 else 1.0
+	elif input_x != 0.0:
+		active_walk_dir = sign(input_x)
+
+	# Add gravity and allow free horizontal movement when falling or mid-air (independent of tempo)
 	if not is_on_floor():
 		velocity += (get_gravity() * 1.4) * delta
+		if input_x != 0.0:
+			var air_dir = sign(input_x)
+			if $Sprite2D:
+				$Sprite2D.flip_h = (air_dir < 0)
+			velocity.x = air_dir * SPEED
+			current_move_mode = MoveMode.SMOOTH_WALKING
+			direction_change_grace = DIRECTION_CHANGE_GRACE_TIME
+		else:
+			velocity.x = move_toward(velocity.x, 0.0, SPEED * 8.0 * delta)
 		move_and_slide()
 		return
+
+	if direction_change_grace > 0.0:
+		direction_change_grace -= delta
 
 	# ----------------------------------------------------
 	# 0. PARRY DANCE MECHANIC (Key J / Left Click / Interact F when not leaping)
@@ -251,9 +294,7 @@ func _physics_process(delta: float) -> void:
 	# ----------------------------------------------------
 	# 2. RHYTHM WALKING (A / D, Left / Right Arrow, D-Pad)
 	# ----------------------------------------------------
-	var input_x = Input.get_axis("ui_left", "ui_right")
-	
-	# Key Released -> Reset to IDLE
+	# Key Released -> Reset to IDLE (direction_change_grace stays active briefly for quick turnarounds)
 	if input_x == 0.0:
 		current_move_mode = MoveMode.IDLE
 		velocity.x = 0.0
@@ -264,30 +305,34 @@ func _physics_process(delta: float) -> void:
 	if $Sprite2D:
 		$Sprite2D.flip_h = (dir_sign < 0)
 		
-	# CASE 1: Locked Out (Mistimed press was made and is still being held)
+	# CASE 1: Locked Out (Mistimed press was made from a standstill and is still being held)
 	# Don't try again until player releases the key!
 	if current_move_mode == MoveMode.LOCKED_OUT:
 		velocity.x = 0.0
 		move_and_slide()
 		return
 		
-	# CASE 2: Smooth Walking (Initiated on-beat and held)
-	if current_move_mode == MoveMode.SMOOTH_WALKING:
+	# CASE 2: Smooth Walking or Quick Direction Change while already moving (No tempo check needed)
+	if current_move_mode == MoveMode.SMOOTH_WALKING or (current_move_mode == MoveMode.IDLE and direction_change_grace > 0.0):
+		current_move_mode = MoveMode.SMOOTH_WALKING
+		direction_change_grace = DIRECTION_CHANGE_GRACE_TIME
 		velocity.x = dir_sign * SPEED
 		move_and_slide()
 		return
 		
-	# CASE 3: Fresh Press from IDLE
+	# CASE 3: Fresh Press from a complete stop (IDLE)
 	if current_move_mode == MoveMode.IDLE:
 		var rating = Rhythm.rythymState(soundTrack, current_bpm)
 		if rating != "MISS" and rating != "error":
 			# Pressed on tempo! Enter SMOOTH_WALKING mode immediately for smooth continuous movement
 			current_move_mode = MoveMode.SMOOTH_WALKING
+			direction_change_grace = DIRECTION_CHANGE_GRACE_TIME
 			velocity.x = dir_sign * SPEED
 			move_and_slide()
 		else:
 			# Pressed off tempo! Lock out until released so it won't auto-trigger
 			current_move_mode = MoveMode.LOCKED_OUT
+			direction_change_grace = 0.0
 			_play_mistime_feedback()
 		return
 
@@ -304,12 +349,14 @@ func _execute_ground_hop(dir: float, bpm: float) -> void:
 	var start_y = global_position.y
 	
 	var tween = create_tween().set_parallel(true)
+	_active_move_tweens.append(tween)
 	# Horizontal advance
 	tween.tween_property(self, "global_position:x", target_x, hop_duration)\
 		.set_trans(Tween.TRANS_LINEAR)
 	
 	# Vertical bounce arc
 	var y_tween = create_tween()
+	_active_move_tweens.append(y_tween)
 	y_tween.tween_property(self, "global_position:y", start_y - HOP_HEIGHT, hop_duration * 0.5)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	y_tween.tween_property(self, "global_position:y", start_y, hop_duration * 0.5)\
@@ -330,12 +377,14 @@ func _execute_platform_leap(plat: RhythmPlatform, bpm: float) -> void:
 	var apex_y = min(start_pos.y, target_pos.y) - 90.0 # High jump arc above both points
 	
 	var tween = create_tween().set_parallel(true)
+	_active_move_tweens.append(tween)
 	# Horizontal leap
 	tween.tween_property(self, "global_position:x", target_pos.x, leap_duration)\
 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 	
 	# Vertical arc (rise to apex then descend onto platform)
 	var y_tween = create_tween()
+	_active_move_tweens.append(y_tween)
 	y_tween.tween_property(self, "global_position:y", apex_y, leap_duration * 0.45)\
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
 	y_tween.tween_property(self, "global_position:y", target_pos.y, leap_duration * 0.55)\
@@ -352,6 +401,7 @@ func _execute_platform_leap(plat: RhythmPlatform, bpm: float) -> void:
 func _play_mistime_feedback() -> void:
 	is_rhythm_hopping = true
 	var tw = create_tween()
+	_active_move_tweens.append(tw)
 	var start_x = global_position.x
 	tw.tween_property(self, "global_position:x", start_x + 6.0, 0.04)
 	tw.tween_property(self, "global_position:x", start_x - 6.0, 0.04)

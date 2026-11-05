@@ -78,10 +78,12 @@ func _on_language_selected(index: int) -> void:
 
 # "Play" starts the real game (Level 1)
 func _on_play_button_up() -> void:
+	Global.reset_player_health()
 	get_tree().change_scene_to_file("res://scenes/level_1.tscn");
 
 
 func _on_test_map_button_up() -> void:
+	Global.reset_player_health()
 	get_tree().change_scene_to_file("res://scenes/test_map.tscn");
 
 

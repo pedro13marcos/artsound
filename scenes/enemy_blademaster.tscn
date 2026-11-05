@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c5enemyscene01"]
+[gd_scene format=3 uid="uid://brgmvks1ali2w"]
 
 [ext_resource type="Script" path="res://scripts/rhythm_enemy.gd" id="1_enemy"]
 [ext_resource type="Texture2D" path="res://image/blademaster.png" id="2_bm"]

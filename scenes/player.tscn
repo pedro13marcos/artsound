@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c5playerscene01"]
+[gd_scene format=3 uid="uid://j0bjvr6bjgrs"]
 
 [ext_resource type="Script" path="res://scripts/player.gd" id="1_player"]
 [ext_resource type="Texture2D" path="res://image/character.png" id="2_char"]

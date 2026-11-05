@@ -23,10 +23,12 @@ var _debug_overlay_node: Node2D = null
 func set_debug_hitboxes(enabled: bool) -> void:
 	debug_show_hitboxes = enabled
 
-var player_max_health: int = 3
-var player_current_health: int = 3
+const DEFAULT_MAX_HEALTH: int = 3
+var player_max_health: int = DEFAULT_MAX_HEALTH
+var player_current_health: int = DEFAULT_MAX_HEALTH
 
 func reset_player_health() -> void:
+	player_max_health = DEFAULT_MAX_HEALTH
 	player_current_health = player_max_health
 	player_health_changed.emit(player_current_health, player_max_health)
 
@@ -135,6 +137,8 @@ func _resolve_supported_locale(raw_locale: String) -> String:
 		return "en"
 	return "pt_BR"
 
+const GAME_VERSION: String = "0.26"
+
 func _create_watermark() -> void:
 	# Persistent canvas layer on top of all scenes
 	var canvas = CanvasLayer.new()
@@ -144,7 +148,7 @@ func _create_watermark() -> void:
 	
 	var label = Label.new()
 	label.name = "WatermarkLabel"
-	label.text = "pre-alpha version 0.22"
+	label.text = "pre-alpha version " + GAME_VERSION
 	
 	# Add child to the CanvasLayer first so anchors calculate against the viewport
 	canvas.add_child(label)
