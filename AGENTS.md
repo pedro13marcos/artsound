@@ -19,7 +19,8 @@ Follow these rules whenever making any code, scene, asset, or configuration alte
    - **Never** run `git push` automatically.
    - Only push to the remote repository when the user explicitly asks to push.
 
-4. **Organize AI-Made Visual & Audio Placeholders in `ai/` Subfolders**:
-   - Whenever creating or adding any AI-generated or AI-edited visual (sprites, textures, UI) or audio (voice acting, SFX, music) asset, always place it inside an `ai/` subfolder within the appropriate category folder (for example: `image/<category>/ai/<filename>.png` or `Sounds/<category>/ai/<filename>.mp3`).
-   - Never mix AI visual or audio placeholders directly into the main asset directories so they can be easily filtered and replaced before final release.
-   - If moving existing AI placeholder assets into `ai/` subfolders, update all scene (`.tscn`), script (`.gd`), and `.import` references so nothing breaks in Godot.
+4. **Organize AI Placeholders in Unified Root `ai/` Folders**:
+   - Never scatter AI placeholders into subcategory directories. Instead, place all AI visual assets together inside a single top-level `ai/` folder within the main visual asset directory (for example: `image/ai/` or `assets/ai/`).
+   - Place all AI audio assets together inside a single top-level `ai/` folder within the main sound directory (for example: `Sounds/ai/` or `sound/ai/`).
+   - Never mix AI placeholders into human-made asset folders so they can be easily reviewed, filtered, and replaced before final release.
+   - When moving assets into `ai/` folders, always update and relink all scene (`.tscn`), script (`.gd`), and `.import` references so nothing breaks in Godot.
