@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" path="res://scenes/heart_container.tscn" id="10_heart_cnt"]
 [ext_resource type="PackedScene" path="res://scenes/heart_expansion.tscn" id="11_hexp"]
 [ext_resource type="Script" path="res://scripts/out_of_bounds.gd" id="12_oob"]
+[ext_resource type="TileSet" uid="uid://c8worldtileset01" path="res://resources/world_tileset.tres" id="13_wts"]
+[ext_resource type="Script" path="res://scripts/rhythm_tile_map.gd" id="14_rtm"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_oob_bottom"]
 size = Vector2(3600, 500)
@@ -84,6 +86,10 @@ script = ExtResource("9_wall")
 size = Vector2(36, 840)
 
 [node name="Platforms" type="Node2D" parent="." unique_id=1050641657]
+
+[node name="TileMapPlatforms" type="TileMapLayer" parent="Platforms"]
+tile_set = ExtResource("13_wts")
+script = ExtResource("14_rtm")
 
 [node name="EnemyFloor" parent="Platforms" unique_id=79466418 instance=ExtResource("6_plat_scn")]
 position = Vector2(1020, 1890)

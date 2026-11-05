@@ -122,9 +122,12 @@ func has_line_of_sight_to(target: Node) -> bool:
 	if collider == target or collider == self:
 		return true
 		
-	# If collider is child of target or target is ancestor
-	if collider is Node and (target.is_ancestor_of(collider) or collider.is_ancestor_of(target)):
-		return true
+	# If collider is child of target or target is ancestor, or collider is the target's source TileMap
+	if collider is Node:
+		if target.is_ancestor_of(collider) or collider.is_ancestor_of(target):
+			return true
+		if "source_tile_map" in target and target.source_tile_map == collider:
+			return true
 		
 	return false
 
@@ -265,6 +268,13 @@ func _physics_process(delta: float) -> void:
 	# ----------------------------------------------------
 	if Input.is_action_just_pressed("parry") or (Input.is_action_just_pressed("interact") and not (current_target is RhythmPlatform)):
 		parry()
+		return
+
+	# ----------------------------------------------------
+	# 0.5. ONE-WAY PLATFORM DROP-THROUGH (Hold Down + Jump)
+	# ----------------------------------------------------
+	if Input.is_action_pressed("ui_down") and (Input.is_action_just_pressed("ui_accept") or Input.is_action_just_pressed("interact")):
+		position.y += 6.0
 		return
 
 	# ----------------------------------------------------

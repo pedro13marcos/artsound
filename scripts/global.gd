@@ -137,7 +137,7 @@ func _resolve_supported_locale(raw_locale: String) -> String:
 		return "en"
 	return "pt_BR"
 
-const GAME_VERSION: String = "0.27"
+const GAME_VERSION: String = "0.28"
 
 func _create_watermark() -> void:
 	# Persistent canvas layer on top of all scenes
